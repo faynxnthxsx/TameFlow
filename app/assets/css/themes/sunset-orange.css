@@ -1,0 +1,40 @@
+[data-theme="sunset-orange"] {
+  --tf-color-bg: #fffaf5;
+  --tf-color-surface: #ffffff;
+  --tf-color-surface-alt: #fff1e6;
+  --tf-color-border: #fed7aa;
+
+  --tf-color-text: #431407;
+  --tf-color-text-muted: #92603f;
+  --tf-color-text-inverse: #ffffff;
+
+  --tf-color-primary: #ea580c;
+  --tf-color-primary-hover: #c2410c;
+  --tf-color-primary-fg: #ffffff;
+  --tf-color-secondary: #92603f;
+
+  --tf-color-success: #16a34a;
+  --tf-color-warning: #d97706;
+  --tf-color-danger: #dc2626;
+  --tf-color-info: #0891b2;
+
+  --tf-color-priority-low: #92603f;
+  --tf-color-priority-medium: #ea580c;
+  --tf-color-priority-high: #d97706;
+  --tf-color-priority-critical: #dc2626;
+
+  --tf-color-navbar-bg: #ffffff;
+  --tf-color-sidebar-bg: #431407;
+  --tf-color-sidebar-text: #fdba8c;
+  --tf-color-sidebar-text-active: #ffffff;
+
+  --tf-shadow-card: 0 1px 3px rgba(67, 20, 7, 0.08), 0 1px 2px rgba(67, 20, 7, 0.06);
+  --tf-shadow-modal: 0 20px 25px rgba(67, 20, 7, 0.15), 0 8px 10px rgba(67, 20, 7, 0.08);
+
+  --tf-chart-series-1: #ea580c;
+  --tf-chart-series-2: #2563eb;
+  --tf-chart-series-3: #16a34a;
+  --tf-chart-series-4: #9333ea;
+  --tf-chart-series-5: #0891b2;
+  --tf-chart-series-6: #dc2626;
+}

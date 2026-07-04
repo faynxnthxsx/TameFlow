@@ -1,0 +1,96 @@
+{
+  "common": {
+    "appName": "TeamFlow",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "confirm": "確認",
+    "loading": "読み込み中...",
+    "search": "検索",
+    "back": "戻る",
+    "next": "次へ",
+    "yes": "はい",
+    "no": "いいえ",
+    "or": "または"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "workspaces": "ワークスペース",
+    "projects": "プロジェクト",
+    "calendar": "カレンダー",
+    "notifications": "通知",
+    "profile": "プロフィール",
+    "settings": "設定",
+    "logout": "ログアウト"
+  },
+  "theme": {
+    "label": "テーマ",
+    "corporateBlue": "Corporate Blue",
+    "emeraldGreen": "Emerald Green",
+    "sunsetOrange": "Sunset Orange",
+    "purpleNeon": "Purple Neon",
+    "darkMode": "Dark Mode"
+  },
+  "language": {
+    "label": "言語",
+    "en": "英語",
+    "th": "タイ語",
+    "ja": "日本語"
+  },
+  "auth": {
+    "login": {
+      "title": "ログイン",
+      "email": "メールアドレス",
+      "password": "パスワード",
+      "rememberMe": "ログイン状態を保持する",
+      "forgotPassword": "パスワードをお忘れですか?",
+      "submit": "ログイン",
+      "noAccount": "アカウントをお持ちでないですか?",
+      "register": "新規登録",
+      "invalidCredentials": "メールアドレスまたはパスワードが正しくありません"
+    },
+    "register": {
+      "title": "アカウントを作成",
+      "name": "名前",
+      "email": "メールアドレス",
+      "password": "パスワード",
+      "confirmPassword": "パスワード(確認)",
+      "submit": "アカウントを作成",
+      "haveAccount": "すでにアカウントをお持ちですか?",
+      "login": "ログイン",
+      "emailTaken": "このメールアドレスは既に登録されています"
+    },
+    "oauth": {
+      "google": "Googleで続ける",
+      "github": "GitHubで続ける"
+    },
+    "forgotPassword": {
+      "title": "パスワードをリセット",
+      "email": "メールアドレス",
+      "submit": "リセットリンクを送信"
+    },
+    "resetPassword": {
+      "title": "新しいパスワードを設定",
+      "password": "新しいパスワード",
+      "confirmPassword": "新しいパスワード(確認)",
+      "submit": "パスワードを更新"
+    },
+    "verifyEmail": {
+      "title": "メールアドレスを確認",
+      "message": "確認リンクをメールアドレス宛に送信しました。"
+    }
+  },
+  "validation": {
+    "required": "この項目は必須です",
+    "email": "有効なメールアドレスを入力してください",
+    "minLength": "{min}文字以上で入力してください",
+    "passwordMismatch": "パスワードが一致しません"
+  },
+  "error": {
+    "generic": "エラーが発生しました。もう一度お試しください。",
+    "notFound": "見つかりません",
+    "unauthorized": "この操作を行う権限がありません"
+  }
+}

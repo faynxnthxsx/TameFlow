@@ -1,0 +1,40 @@
+[data-theme="dark-mode"] {
+  --tf-color-bg: #0b1120;
+  --tf-color-surface: #131b2e;
+  --tf-color-surface-alt: #1b2439;
+  --tf-color-border: #263248;
+
+  --tf-color-text: #e2e8f0;
+  --tf-color-text-muted: #94a3b8;
+  --tf-color-text-inverse: #0f172a;
+
+  --tf-color-primary: #3b82f6;
+  --tf-color-primary-hover: #60a5fa;
+  --tf-color-primary-fg: #0b1120;
+  --tf-color-secondary: #94a3b8;
+
+  --tf-color-success: #22c55e;
+  --tf-color-warning: #f59e0b;
+  --tf-color-danger: #f87171;
+  --tf-color-info: #22d3ee;
+
+  --tf-color-priority-low: #94a3b8;
+  --tf-color-priority-medium: #3b82f6;
+  --tf-color-priority-high: #f59e0b;
+  --tf-color-priority-critical: #f87171;
+
+  --tf-color-navbar-bg: #131b2e;
+  --tf-color-sidebar-bg: #060a14;
+  --tf-color-sidebar-text: #94a3b8;
+  --tf-color-sidebar-text-active: #ffffff;
+
+  --tf-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --tf-shadow-modal: 0 20px 25px rgba(0, 0, 0, 0.5), 0 8px 10px rgba(0, 0, 0, 0.35);
+
+  --tf-chart-series-1: #3b82f6;
+  --tf-chart-series-2: #22c55e;
+  --tf-chart-series-3: #f59e0b;
+  --tf-chart-series-4: #c084fc;
+  --tf-chart-series-5: #22d3ee;
+  --tf-chart-series-6: #f87171;
+}
