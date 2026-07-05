@@ -15,23 +15,47 @@
     "no": "いいえ",
     "or": "または"
   },
+  "dashboard": {
+    "greeting": "こんにちは、{name}さん",
+    "welcome": "TeamFlow へおかえりなさい",
+    "taskOverview": "タスク概要",
+    "myTasks": "自分のタスク",
+    "noMyTasks": "割り当てられたタスクはありません",
+    "recentProjects": "最近のプロジェクト",
+    "viewAll": "すべて表示",
+    "noProjects": "まだプロジェクトがありません。",
+    "stats": {
+      "workspaces": "ワークスペース",
+      "projects": "プロジェクト",
+      "tasks": "タスク",
+      "members": "メンバー"
+    },
+    "pending": "保留中",
+    "dueSoon": "期限間近",
+    "overdue": "期限超過",
+    "monthlyTasks": "月別タスク",
+    "deadlines": "締め切り間近",
+    "recentActivity": "最近のアクティビティ",
+    "noDueSoon": "締め切り間近のタスクはありません"
+  },
   "nav": {
     "dashboard": "ダッシュボード",
     "workspaces": "ワークスペース",
+    "invitations": "招待",
     "projects": "プロジェクト",
     "calendar": "カレンダー",
+    "activity": "アクティビティ",
+    "members": "メンバー",
+    "reports": "レポート",
     "notifications": "通知",
     "profile": "プロフィール",
     "settings": "設定",
     "logout": "ログアウト"
   },
   "theme": {
-    "label": "テーマ",
-    "corporateBlue": "Corporate Blue",
-    "emeraldGreen": "Emerald Green",
-    "sunsetOrange": "Sunset Orange",
-    "purpleNeon": "Purple Neon",
-    "darkMode": "Dark Mode"
+    "label": "表示モード",
+    "light": "ライト",
+    "dark": "ダーク"
   },
   "language": {
     "label": "言語",
@@ -42,6 +66,8 @@
   "auth": {
     "login": {
       "title": "ログイン",
+      "welcome": "おかえりなさい!",
+      "subtitle": "TeamFlow にサインインして続行",
       "email": "メールアドレス",
       "password": "パスワード",
       "rememberMe": "ログイン状態を保持する",
@@ -82,6 +108,98 @@
       "message": "確認リンクをメールアドレス宛に送信しました。"
     }
   },
+  "profile": {
+    "title": "プロフィール",
+    "subtitle": "個人情報を管理します",
+    "displayName": "表示名",
+    "displayNamePlaceholder": "お名前",
+    "email": "メールアドレス",
+    "emailReadonly": "メールアドレスはここでは変更できません。",
+    "avatarUrl": "アバターURL",
+    "avatarUrlPlaceholder": "https://…/photo.jpg",
+    "avatarHint": "正方形の画像リンクを貼り付けてください。",
+    "memberSince": "登録日",
+    "preferences": "設定",
+    "save": "変更を保存",
+    "saved": "プロフィールを保存しました。",
+    "photo": "プロフィール写真",
+    "uploadPhoto": "写真をアップロード",
+    "removePhoto": "削除",
+    "uploading": "アップロード中...",
+    "photoInvalid": "画像ファイルを選択してください",
+    "photoTooLarge": "画像は2MB未満にしてください",
+    "photoHint": "PNG/JPG、2MBまで"
+  },
+  "workspace": {
+    "listTitle": "ワークスペース",
+    "create": "ワークスペースを作成",
+    "namePlaceholder": "ワークスペース名",
+    "empty": "まだワークスペースがありません。最初のワークスペースを作成しましょう!",
+    "members": "メンバー",
+    "createdAt": "作成日",
+    "joinedAt": "参加日",
+    "you": "あなた"
+  },
+  "project": {
+    "sectionTitle": "プロジェクト",
+    "create": "プロジェクトを作成",
+    "namePlaceholder": "プロジェクト名",
+    "descriptionPlaceholder": "説明(任意)",
+    "empty": "まだプロジェクトがありません。"
+  },
+  "task": {
+    "create": "タスクを作成",
+    "titlePlaceholder": "何をしますか?",
+    "priority": "優先度",
+    "dueDate": "期限",
+    "assignee": "担当者",
+    "unassigned": "未割り当て",
+    "emptyColumn": "タスクなし",
+    "deleteConfirm": "タスク「{title}」を削除しますか?",
+    "description": "説明",
+    "descriptionPlaceholder": "詳細を追加...",
+    "noDescription": "説明なし",
+    "status": "ステータス",
+    "createdBy": "作成者",
+    "backToBoard": "ボードに戻る",
+    "checklistTitle": "チェックリスト",
+    "checklistPlaceholder": "項目を追加...",
+    "checklistEmpty": "チェックリスト項目がありません",
+    "comments": "コメント",
+    "commentPlaceholder": "コメントを書く...",
+    "noComments": "コメントはまだありません"
+  },
+  "taskStatus": {
+    "todo": "未着手",
+    "in_progress": "進行中",
+    "done": "完了"
+  },
+  "taskPriority": {
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "critical": "緊急"
+  },
+  "invite": {
+    "sectionTitle": "保留中の招待",
+    "send": "招待する",
+    "emailPlaceholder": "メールアドレス",
+    "empty": "保留中の招待はありません。",
+    "pendingSince": "招待日",
+    "cancel": "取り消す",
+    "duplicate": "このメールアドレスへの招待はすでに保留中です。",
+    "myTitle": "あなたへの招待",
+    "noneForMe": "現在、招待はありません。",
+    "invitedAs": "招待された役割",
+    "accept": "承認",
+    "decline": "辞退"
+  },
+  "role": {
+    "owner": "オーナー",
+    "admin": "管理者",
+    "member": "メンバー",
+    "viewer": "閲覧者"
+  },
   "validation": {
     "required": "この項目は必須です",
     "email": "有効なメールアドレスを入力してください",
@@ -92,5 +210,38 @@
     "generic": "エラーが発生しました。もう一度お試しください。",
     "notFound": "見つかりません",
     "unauthorized": "この操作を行う権限がありません"
+  },
+  "activity": {
+    "empty": "アクティビティはまだありません",
+    "createdProject": "がプロジェクトを作成",
+    "createdTask": "がタスクを作成"
+  },
+  "members": {
+    "empty": "メンバーが見つかりません",
+    "remove": "削除",
+    "removeConfirm": "{name}を{workspace}から削除しますか?",
+    "managed": "あなたが管理"
+  },
+  "reports": {
+    "totalTasks": "タスク合計",
+    "completed": "完了",
+    "completionRate": "完了率",
+    "overdue": "期限超過",
+    "byStatus": "ステータス別タスク",
+    "byPriority": "優先度別タスク",
+    "empty": "タスクデータがありません",
+    "daily": "日次アクティビティ",
+    "tasksCreated": "作成されたタスク"
+  },
+  "settings": {
+    "appearanceDesc": "ライト/ダークを選択します。",
+    "languageDesc": "使用する言語を選択します。",
+    "account": "アカウント",
+    "accountDesc": "プロフィールを管理します。",
+    "editProfile": "プロフィールを編集"
+  },
+  "calendar": {
+    "today": "今日",
+    "empty": "期限のあるタスクがありません"
   }
 }

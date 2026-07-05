@@ -15,23 +15,47 @@
     "no": "No",
     "or": "or"
   },
+  "dashboard": {
+    "greeting": "Hi, {name}",
+    "welcome": "Welcome back to TeamFlow",
+    "taskOverview": "Task Overview",
+    "myTasks": "My Tasks",
+    "noMyTasks": "You have no open tasks assigned.",
+    "recentProjects": "Recent Projects",
+    "viewAll": "View all",
+    "noProjects": "No projects yet.",
+    "stats": {
+      "workspaces": "Workspaces",
+      "projects": "Projects",
+      "tasks": "Tasks",
+      "members": "Members"
+    },
+    "pending": "Pending",
+    "dueSoon": "Due soon",
+    "overdue": "Overdue",
+    "monthlyTasks": "Tasks this year",
+    "deadlines": "Upcoming deadlines",
+    "recentActivity": "Recent activity",
+    "noDueSoon": "No upcoming deadlines."
+  },
   "nav": {
     "dashboard": "Dashboard",
     "workspaces": "Workspaces",
+    "invitations": "Invitations",
     "projects": "Projects",
     "calendar": "Calendar",
+    "activity": "Activity",
+    "members": "Members",
+    "reports": "Reports",
     "notifications": "Notifications",
     "profile": "Profile",
     "settings": "Settings",
     "logout": "Log out"
   },
   "theme": {
-    "label": "Theme",
-    "corporateBlue": "Corporate Blue",
-    "emeraldGreen": "Emerald Green",
-    "sunsetOrange": "Sunset Orange",
-    "purpleNeon": "Purple Neon",
-    "darkMode": "Dark Mode"
+    "label": "Appearance",
+    "light": "Light",
+    "dark": "Dark"
   },
   "language": {
     "label": "Language",
@@ -42,6 +66,8 @@
   "auth": {
     "login": {
       "title": "Log in",
+      "welcome": "Welcome back!",
+      "subtitle": "Sign in to continue to TeamFlow",
       "email": "Email",
       "password": "Password",
       "rememberMe": "Remember me",
@@ -82,6 +108,98 @@
       "message": "We've sent a verification link to your email address."
     }
   },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your personal information",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "Your name",
+    "email": "Email",
+    "emailReadonly": "Your email can't be changed here.",
+    "avatarUrl": "Avatar URL",
+    "avatarUrlPlaceholder": "https://…/photo.jpg",
+    "avatarHint": "Paste a link to a square image.",
+    "memberSince": "Member since",
+    "preferences": "Preferences",
+    "save": "Save changes",
+    "saved": "Profile saved.",
+    "photo": "Profile photo",
+    "uploadPhoto": "Upload photo",
+    "removePhoto": "Remove",
+    "uploading": "Uploading...",
+    "photoInvalid": "Please choose an image file.",
+    "photoTooLarge": "Image must be under 2 MB.",
+    "photoHint": "PNG or JPG, up to 2 MB."
+  },
+  "workspace": {
+    "listTitle": "Your workspaces",
+    "create": "Create workspace",
+    "namePlaceholder": "Workspace name",
+    "empty": "You don't have any workspaces yet. Create your first one!",
+    "members": "Members",
+    "createdAt": "Created",
+    "joinedAt": "Joined",
+    "you": "You"
+  },
+  "project": {
+    "sectionTitle": "Projects",
+    "create": "Create project",
+    "namePlaceholder": "Project name",
+    "descriptionPlaceholder": "Description (optional)",
+    "empty": "No projects yet."
+  },
+  "task": {
+    "create": "Create task",
+    "titlePlaceholder": "What needs to be done?",
+    "priority": "Priority",
+    "dueDate": "Due date",
+    "assignee": "Assignee",
+    "unassigned": "Unassigned",
+    "emptyColumn": "No tasks",
+    "deleteConfirm": "Delete task \"{title}\"?",
+    "description": "Description",
+    "descriptionPlaceholder": "Add more detail...",
+    "noDescription": "No description",
+    "status": "Status",
+    "createdBy": "Created by",
+    "backToBoard": "Back to board",
+    "checklistTitle": "Checklist",
+    "checklistPlaceholder": "Add an item...",
+    "checklistEmpty": "No checklist items yet",
+    "comments": "Comments",
+    "commentPlaceholder": "Write a comment...",
+    "noComments": "No comments yet."
+  },
+  "taskStatus": {
+    "todo": "To do",
+    "in_progress": "In progress",
+    "done": "Done"
+  },
+  "taskPriority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "invite": {
+    "sectionTitle": "Pending invitations",
+    "send": "Invite",
+    "emailPlaceholder": "Email address",
+    "empty": "No pending invitations.",
+    "pendingSince": "Invited",
+    "cancel": "Cancel",
+    "duplicate": "There is already a pending invitation for this email.",
+    "myTitle": "Your invitations",
+    "noneForMe": "You have no invitations right now.",
+    "invitedAs": "Invited as",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "role": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "member": "Member",
+    "viewer": "Viewer"
+  },
   "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",
@@ -92,5 +210,38 @@
     "generic": "Something went wrong. Please try again.",
     "notFound": "Not found",
     "unauthorized": "You don't have permission to do this"
+  },
+  "activity": {
+    "empty": "No activity yet.",
+    "createdProject": "created project",
+    "createdTask": "created task"
+  },
+  "members": {
+    "empty": "No members found.",
+    "remove": "Remove",
+    "removeConfirm": "Remove {name} from {workspace}?",
+    "managed": "Managed by you"
+  },
+  "reports": {
+    "totalTasks": "Total tasks",
+    "completed": "Completed",
+    "completionRate": "Completion rate",
+    "overdue": "Overdue",
+    "byStatus": "Tasks by status",
+    "byPriority": "Tasks by priority",
+    "empty": "No task data yet.",
+    "daily": "Daily activity",
+    "tasksCreated": "Tasks created"
+  },
+  "settings": {
+    "appearanceDesc": "Choose how TeamFlow looks.",
+    "languageDesc": "Choose your preferred language.",
+    "account": "Account",
+    "accountDesc": "Manage your profile details.",
+    "editProfile": "Edit profile"
+  },
+  "calendar": {
+    "today": "Today",
+    "empty": "No tasks with due dates."
   }
 }

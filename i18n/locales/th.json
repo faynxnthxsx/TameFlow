@@ -15,23 +15,47 @@
     "no": "ไม่ใช่",
     "or": "หรือ"
   },
+  "dashboard": {
+    "greeting": "สวัสดีครับ, {name}",
+    "welcome": "ยินดีต้อนรับกลับมาสู่ TeamFlow",
+    "taskOverview": "ภาพรวมงาน",
+    "myTasks": "งานของฉัน",
+    "noMyTasks": "ยังไม่มีงานที่มอบหมายให้คุณ",
+    "recentProjects": "โปรเจกต์ล่าสุด",
+    "viewAll": "ดูทั้งหมด",
+    "noProjects": "ยังไม่มีโปรเจกต์",
+    "stats": {
+      "workspaces": "เวิร์กสเปซ",
+      "projects": "โปรเจกต์",
+      "tasks": "งาน",
+      "members": "สมาชิก"
+    },
+    "pending": "รอดำเนินการ",
+    "dueSoon": "ใกล้หมดเวลา",
+    "overdue": "เกินกำหนด",
+    "monthlyTasks": "งานรายเดือน",
+    "deadlines": "ใกล้หมดกำหนด",
+    "recentActivity": "กิจกรรมล่าสุด",
+    "noDueSoon": "ไม่มีงานใกล้กำหนด"
+  },
   "nav": {
     "dashboard": "แดชบอร์ด",
     "workspaces": "เวิร์กสเปซ",
+    "invitations": "คำเชิญ",
     "projects": "โปรเจกต์",
     "calendar": "ปฏิทิน",
+    "activity": "กิจกรรม",
+    "members": "สมาชิก",
+    "reports": "รายงาน",
     "notifications": "การแจ้งเตือน",
     "profile": "โปรไฟล์",
     "settings": "ตั้งค่า",
     "logout": "ออกจากระบบ"
   },
   "theme": {
-    "label": "ธีม",
-    "corporateBlue": "Corporate Blue",
-    "emeraldGreen": "Emerald Green",
-    "sunsetOrange": "Sunset Orange",
-    "purpleNeon": "Purple Neon",
-    "darkMode": "Dark Mode"
+    "label": "โหมดแสดงผล",
+    "light": "สว่าง",
+    "dark": "มืด"
   },
   "language": {
     "label": "ภาษา",
@@ -42,6 +66,8 @@
   "auth": {
     "login": {
       "title": "เข้าสู่ระบบ",
+      "welcome": "ยินดีต้อนรับกลับมา!",
+      "subtitle": "เข้าสู่ระบบเพื่อไปยัง TeamFlow",
       "email": "อีเมล",
       "password": "รหัสผ่าน",
       "rememberMe": "จดจำฉันไว้",
@@ -82,6 +108,98 @@
       "message": "เราได้ส่งลิงก์ยืนยันไปยังอีเมลของคุณแล้ว"
     }
   },
+  "profile": {
+    "title": "โปรไฟล์",
+    "subtitle": "จัดการข้อมูลส่วนตัวของคุณ",
+    "displayName": "ชื่อที่แสดง",
+    "displayNamePlaceholder": "ชื่อของคุณ",
+    "email": "อีเมล",
+    "emailReadonly": "ไม่สามารถเปลี่ยนอีเมลได้ที่นี่",
+    "avatarUrl": "ลิงก์รูปโปรไฟล์",
+    "avatarUrlPlaceholder": "https://…/photo.jpg",
+    "avatarHint": "วางลิงก์รูปภาพแบบสี่เหลี่ยมจัตุรัส",
+    "memberSince": "เป็นสมาชิกตั้งแต่",
+    "preferences": "การตั้งค่า",
+    "save": "บันทึกการเปลี่ยนแปลง",
+    "saved": "บันทึกโปรไฟล์แล้ว",
+    "photo": "รูปโปรไฟล์",
+    "uploadPhoto": "อัปโหลดรูป",
+    "removePhoto": "ลบรูป",
+    "uploading": "กำลังอัปโหลด...",
+    "photoInvalid": "กรุณาเลือกไฟล์รูปภาพ",
+    "photoTooLarge": "รูปต้องมีขนาดเล็กกว่า 2 MB",
+    "photoHint": "PNG หรือ JPG ไม่เกิน 2 MB"
+  },
+  "workspace": {
+    "listTitle": "เวิร์กสเปซของคุณ",
+    "create": "สร้างเวิร์กสเปซ",
+    "namePlaceholder": "ชื่อเวิร์กสเปซ",
+    "empty": "ยังไม่มีเวิร์กสเปซ สร้างอันแรกของคุณเลย!",
+    "members": "สมาชิก",
+    "createdAt": "สร้างเมื่อ",
+    "joinedAt": "เข้าร่วมเมื่อ",
+    "you": "คุณ"
+  },
+  "project": {
+    "sectionTitle": "โปรเจกต์",
+    "create": "สร้างโปรเจกต์",
+    "namePlaceholder": "ชื่อโปรเจกต์",
+    "descriptionPlaceholder": "รายละเอียด (ไม่บังคับ)",
+    "empty": "ยังไม่มีโปรเจกต์"
+  },
+  "task": {
+    "create": "สร้างงาน",
+    "titlePlaceholder": "ต้องทำอะไรบ้าง?",
+    "priority": "ความสำคัญ",
+    "dueDate": "กำหนดส่ง",
+    "assignee": "ผู้รับผิดชอบ",
+    "unassigned": "ยังไม่มอบหมาย",
+    "emptyColumn": "ไม่มีงาน",
+    "deleteConfirm": "ลบงาน \"{title}\" ใช่ไหม?",
+    "description": "รายละเอียด",
+    "descriptionPlaceholder": "เพิ่มรายละเอียด...",
+    "noDescription": "ไม่มีรายละเอียด",
+    "status": "สถานะ",
+    "createdBy": "สร้างโดย",
+    "backToBoard": "กลับไปที่บอร์ด",
+    "checklistTitle": "เช็คลิสต์",
+    "checklistPlaceholder": "เพิ่มรายการ...",
+    "checklistEmpty": "ยังไม่มีรายการ",
+    "comments": "ความคิดเห็น",
+    "commentPlaceholder": "เขียนความคิดเห็น...",
+    "noComments": "ยังไม่มีความคิดเห็น"
+  },
+  "taskStatus": {
+    "todo": "ต้องทำ",
+    "in_progress": "กำลังทำ",
+    "done": "เสร็จแล้ว"
+  },
+  "taskPriority": {
+    "low": "ต่ำ",
+    "medium": "ปานกลาง",
+    "high": "สูง",
+    "critical": "ด่วนมาก"
+  },
+  "invite": {
+    "sectionTitle": "คำเชิญที่รอตอบรับ",
+    "send": "เชิญ",
+    "emailPlaceholder": "อีเมล",
+    "empty": "ยังไม่มีคำเชิญที่รอตอบรับ",
+    "pendingSince": "เชิญเมื่อ",
+    "cancel": "ยกเลิก",
+    "duplicate": "มีคำเชิญที่รอตอบรับสำหรับอีเมลนี้อยู่แล้ว",
+    "myTitle": "คำเชิญของคุณ",
+    "noneForMe": "ตอนนี้คุณยังไม่มีคำเชิญ",
+    "invitedAs": "เชิญในบทบาท",
+    "accept": "ตอบรับ",
+    "decline": "ปฏิเสธ"
+  },
+  "role": {
+    "owner": "เจ้าของ",
+    "admin": "ผู้ดูแล",
+    "member": "สมาชิก",
+    "viewer": "ผู้ชม"
+  },
   "validation": {
     "required": "กรุณากรอกข้อมูลนี้",
     "email": "กรุณากรอกอีเมลให้ถูกต้อง",
@@ -92,5 +210,38 @@
     "generic": "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
     "notFound": "ไม่พบข้อมูล",
     "unauthorized": "คุณไม่มีสิทธิ์ทำรายการนี้"
+  },
+  "activity": {
+    "empty": "ยังไม่มีความเคลื่อนไหว",
+    "createdProject": "สร้างโปรเจกต์",
+    "createdTask": "สร้างงาน"
+  },
+  "members": {
+    "empty": "ไม่พบสมาชิก",
+    "remove": "นำออก",
+    "removeConfirm": "นำ {name} ออกจาก {workspace} ใช่ไหม?",
+    "managed": "คุณดูแลอยู่"
+  },
+  "reports": {
+    "totalTasks": "งานทั้งหมด",
+    "completed": "เสร็จแล้ว",
+    "completionRate": "อัตรางานเสร็จ",
+    "overdue": "เลยกำหนด",
+    "byStatus": "งานตามสถานะ",
+    "byPriority": "งานตามความสำคัญ",
+    "empty": "ยังไม่มีข้อมูลงาน",
+    "daily": "รายงานรายวัน",
+    "tasksCreated": "งานที่สร้าง"
+  },
+  "settings": {
+    "appearanceDesc": "เลือกโหมดสว่างหรือมืด",
+    "languageDesc": "เลือกภาษาที่ต้องการ",
+    "account": "บัญชี",
+    "accountDesc": "จัดการข้อมูลโปรไฟล์",
+    "editProfile": "แก้ไขโปรไฟล์"
+  },
+  "calendar": {
+    "today": "วันนี้",
+    "empty": "ไม่มีงานที่มีกำหนดส่ง"
   }
 }

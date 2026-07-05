@@ -1,8 +1,5 @@
 @import './themes/_variables.css';
 @import './themes/corporate-blue.css';
-@import './themes/emerald-green.css';
-@import './themes/sunset-orange.css';
-@import './themes/purple-neon.css';
 @import './themes/dark-mode.css';
 
 @tailwind base;

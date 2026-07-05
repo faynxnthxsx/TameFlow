@@ -11,12 +11,16 @@
   --tf-color-primary: #3b82f6;
   --tf-color-primary-hover: #60a5fa;
   --tf-color-primary-fg: #0b1120;
+  --tf-color-brand-accent: #8b5cf6;
   --tf-color-secondary: #94a3b8;
 
   --tf-color-success: #22c55e;
   --tf-color-warning: #f59e0b;
   --tf-color-danger: #f87171;
   --tf-color-info: #22d3ee;
+
+  --tf-color-status-pending: #facc15;
+  --tf-color-status-duesoon: #fb923c;
 
   --tf-color-priority-low: #94a3b8;
   --tf-color-priority-medium: #3b82f6;
@@ -30,6 +34,7 @@
 
   --tf-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --tf-shadow-modal: 0 20px 25px rgba(0, 0, 0, 0.5), 0 8px 10px rgba(0, 0, 0, 0.35);
+  --tf-shadow-glow: 0 0 0 1px rgba(59, 130, 246, 0.45), 0 6px 22px -4px rgba(59, 130, 246, 0.6);
 
   --tf-chart-series-1: #3b82f6;
   --tf-chart-series-2: #22c55e;

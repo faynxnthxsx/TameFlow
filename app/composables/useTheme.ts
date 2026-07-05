@@ -1,15 +1,19 @@
+// The app ships a single blue brand theme in two modes: a light appearance
+// ('corporate-blue') and a dark one ('dark-mode'). The id stays the persisted
+// value (localStorage + user_profiles.preferred_theme) so nothing downstream
+// needed to change when we collapsed the old multi-theme picker into a toggle.
 export const THEMES = [
-  { id: 'corporate-blue', labelKey: 'theme.corporateBlue' },
-  { id: 'emerald-green', labelKey: 'theme.emeraldGreen' },
-  { id: 'sunset-orange', labelKey: 'theme.sunsetOrange' },
-  { id: 'purple-neon', labelKey: 'theme.purpleNeon' },
-  { id: 'dark-mode', labelKey: 'theme.darkMode' }
+  { id: 'corporate-blue', labelKey: 'theme.light' },
+  { id: 'dark-mode', labelKey: 'theme.dark' }
 ] as const
 
 export type ThemeId = (typeof THEMES)[number]['id']
 
+const LIGHT_THEME: ThemeId = 'corporate-blue'
+const DARK_THEME: ThemeId = 'dark-mode'
+
 const STORAGE_KEY = 'tf_theme'
-const DEFAULT_THEME: ThemeId = 'corporate-blue'
+const DEFAULT_THEME: ThemeId = LIGHT_THEME
 const THEME_IDS = THEMES.map((t) => t.id)
 
 export function isThemeId(value: string | null): value is ThemeId {
@@ -35,7 +39,9 @@ export function useTheme() {
   function initFromStorage() {
     if (!import.meta.client) return
     const stored = localStorage.getItem(STORAGE_KEY)
-    const id = isThemeId(stored) ? stored : DEFAULT_THEME
+    // No stored choice yet → follow the OS light/dark preference.
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    const id = isThemeId(stored) ? stored : prefersDark ? DARK_THEME : DEFAULT_THEME
     theme.value = id
     applyThemeToDocument(id)
   }
@@ -62,5 +68,12 @@ export function useTheme() {
     }
   }
 
-  return { theme, THEMES, setTheme, applyTheme, initFromStorage }
+  const isDark = computed(() => theme.value === DARK_THEME)
+
+  /** Flip between light and dark, persisting like setTheme. */
+  function toggleTheme() {
+    setTheme(isDark.value ? LIGHT_THEME : DARK_THEME)
+  }
+
+  return { theme, THEMES, isDark, setTheme, applyTheme, toggleTheme, initFromStorage }
 }

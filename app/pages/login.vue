@@ -41,13 +41,17 @@ async function signInWithProvider(provider: 'google' | 'github') {
 </script>
 
 <template>
-  <div class="w-full max-w-md rounded-lg border border-border bg-surface p-8 shadow-card">
-    <h1 class="text-2xl font-semibold text-text">{{ t('auth.login.title') }}</h1>
+  <div class="w-full max-w-md rounded-2xl border border-border bg-surface p-8 shadow-modal">
+    <div class="flex flex-col items-center text-center">
+      <BrandLogo :with-text="false" size="lg" />
+      <h1 class="mt-4 text-2xl font-bold text-text">{{ t('auth.login.welcome') }}</h1>
+      <p class="mt-1 text-sm text-text-muted">{{ t('auth.login.subtitle') }}</p>
+    </div>
 
-    <div class="mt-6 flex flex-col gap-3">
+    <div class="mt-7 flex flex-col gap-3">
       <button
         type="button"
-        class="flex items-center justify-center gap-3 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text hover:bg-surface-alt"
+        class="flex items-center justify-center gap-3 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-surface-alt"
         @click="signInWithProvider('google')"
       >
         <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -60,7 +64,7 @@ async function signInWithProvider(provider: 'google' | 'github') {
       </button>
       <button
         type="button"
-        class="flex items-center justify-center gap-3 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text hover:bg-surface-alt"
+        class="flex items-center justify-center gap-3 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-surface-alt"
         @click="signInWithProvider('github')"
       >
         <svg class="h-5 w-5 fill-current" viewBox="0 0 16 16" aria-hidden="true">
@@ -84,7 +88,8 @@ async function signInWithProvider(provider: 'google' | 'github') {
           v-model="email"
           type="email"
           autocomplete="email"
-          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none"
+          placeholder="you@example.com"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
       <div>
@@ -94,7 +99,8 @@ async function signInWithProvider(provider: 'google' | 'github') {
           v-model="password"
           type="password"
           autocomplete="current-password"
-          class="w-full rounded-md border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none"
+          placeholder="••••••••"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
@@ -103,7 +109,7 @@ async function signInWithProvider(provider: 'google' | 'github') {
       <button
         type="submit"
         :disabled="loading"
-        class="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg hover:bg-primary-hover disabled:opacity-60"
+        class="mt-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-fg shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         {{ loading ? t('common.loading') : t('auth.login.submit') }}
       </button>

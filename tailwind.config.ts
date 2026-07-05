@@ -20,6 +20,7 @@ export default <Partial<Config>>{
           hover: 'var(--tf-color-primary-hover)',
           fg: 'var(--tf-color-primary-fg)'
         },
+        'brand-accent': 'var(--tf-color-brand-accent)',
         secondary: 'var(--tf-color-secondary)',
         success: 'var(--tf-color-success)',
         warning: 'var(--tf-color-warning)',
@@ -36,7 +37,8 @@ export default <Partial<Config>>{
       },
       boxShadow: {
         card: 'var(--tf-shadow-card)',
-        modal: 'var(--tf-shadow-modal)'
+        modal: 'var(--tf-shadow-modal)',
+        glow: 'var(--tf-shadow-glow)'
       }
     }
   }

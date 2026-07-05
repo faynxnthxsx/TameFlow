@@ -12,7 +12,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   watch(
     user,
     async (u) => {
-      if (!u) return
+      if (!u?.id) return
       const { data, error } = await supabase
         .from('user_profiles')
         .select('preferred_theme, preferred_language')
