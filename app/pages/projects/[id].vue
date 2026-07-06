@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DueStatus } from '~/utils/dates'
 import type { WorkspaceRole } from '~/utils/permissions'
-import type { TaskPriority, TaskStatus } from '~/utils/tasks'
+import type { TaskPriority, TaskStatus, TaskType } from '~/utils/tasks'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -69,11 +69,27 @@ const capabilities = computed(() =>
 )
 const columns = computed(() => groupTasksByStatus(data.value?.tasks ?? []))
 
+// Option lists for the styled AppSelect dropdowns (re-localize with `t`).
+const priorityOptions = computed(() =>
+  TASK_PRIORITIES.map((p) => ({ value: p, label: t(`taskPriority.${p}`) }))
+)
+const typeOptions = computed(() =>
+  TASK_TYPES.map((ty) => ({ value: ty, label: t(`taskType.${ty}`) }))
+)
+const assigneeOptions = computed(() => [
+  { value: '', label: t('task.unassigned') },
+  ...(data.value?.members ?? []).map((m) => ({
+    value: m.user_id,
+    label: m.profile?.display_name ?? '—'
+  }))
+])
+
 // --- create form ---
 const showForm = ref(false)
 const titleInput = ref<HTMLInputElement | null>(null)
 const newTitle = ref('')
 const newPriority = ref<TaskPriority>('medium')
+const newType = ref<TaskType>('other')
 const newDueDate = ref('')
 const newAssignee = ref('')
 const creating = ref(false)
@@ -88,6 +104,7 @@ function cancelForm() {
   showForm.value = false
   newTitle.value = ''
   newPriority.value = 'medium'
+  newType.value = 'other'
   newDueDate.value = ''
   newAssignee.value = ''
   errorMsg.value = ''
@@ -102,6 +119,7 @@ async function createTask() {
     project_id: projectId,
     title,
     priority: newPriority.value,
+    type: newType.value,
     due_date: newDueDate.value || null,
     assignee_id: newAssignee.value || null,
     created_by: data.value?.myUserId
@@ -134,17 +152,28 @@ async function moveTask(task: BoardTask, status: TaskStatus) {
   await refresh()
 }
 
-async function deleteTask(task: BoardTask) {
-  if (!window.confirm(t('task.deleteConfirm', { title: task.title }))) return
+const taskToDelete = ref<BoardTask | null>(null)
+const deleting = ref(false)
+
+function askDelete(task: BoardTask) {
+  taskToDelete.value = task
+}
+
+async function confirmDelete() {
+  const task = taskToDelete.value
+  if (!task) return
+  deleting.value = true
   errorMsg.value = ''
   const { error: deleteError } = await supabase
     .from('tasks')
     .delete()
     .eq('id', task.id)
+  deleting.value = false
   if (deleteError) {
     errorMsg.value = t('error.generic')
     return
   }
+  taskToDelete.value = null
   await refresh()
 }
 
@@ -202,7 +231,7 @@ const STATUS_DOT: Record<TaskStatus, string> = {
           </p>
         </div>
         <button
-          v-if="capabilities?.createTask && !showForm"
+          v-if="capabilities?.createTask"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover"
           @click="openForm"
@@ -212,68 +241,7 @@ const STATUS_DOT: Record<TaskStatus, string> = {
         </button>
       </div>
 
-      <form
-        v-if="showForm"
-        class="mt-4 grid gap-3 rounded-2xl border border-border bg-surface p-4 shadow-card sm:grid-cols-2 lg:grid-cols-4"
-        @submit.prevent="createTask"
-      >
-        <input
-          ref="titleInput"
-          v-model="newTitle"
-          type="text"
-          maxlength="200"
-          :placeholder="t('task.titlePlaceholder')"
-          class="rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:col-span-2 lg:col-span-4"
-        />
-        <label class="flex flex-col gap-1 text-sm text-text-muted">
-          {{ t('task.priority') }}
-          <select
-            v-model="newPriority"
-            class="rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option v-for="p in TASK_PRIORITIES" :key="p" :value="p">
-              {{ t(`taskPriority.${p}`) }}
-            </option>
-          </select>
-        </label>
-        <label class="flex flex-col gap-1 text-sm text-text-muted">
-          {{ t('task.dueDate') }}
-          <input
-            v-model="newDueDate"
-            type="date"
-            class="rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </label>
-        <label class="flex flex-col gap-1 text-sm text-text-muted">
-          {{ t('task.assignee') }}
-          <select
-            v-model="newAssignee"
-            class="rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">{{ t('task.unassigned') }}</option>
-            <option v-for="m in data.members" :key="m.user_id" :value="m.user_id">
-              {{ m.profile?.display_name ?? '—' }}
-            </option>
-          </select>
-        </label>
-        <div class="flex items-end gap-2">
-          <button
-            type="submit"
-            :disabled="creating || !newTitle.trim()"
-            class="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover disabled:opacity-60"
-          >
-            {{ creating ? t('common.loading') : t('task.create') }}
-          </button>
-          <button
-            type="button"
-            class="rounded-xl border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text"
-            @click="cancelForm"
-          >
-            {{ t('common.cancel') }}
-          </button>
-        </div>
-      </form>
-      <p v-if="errorMsg" class="mt-2 text-sm text-danger">{{ errorMsg }}</p>
+      <p v-if="errorMsg && !showForm" class="mt-2 text-sm text-danger">{{ errorMsg }}</p>
 
       <div class="mt-6 grid gap-4 md:grid-cols-3">
         <section
@@ -309,11 +277,11 @@ const STATUS_DOT: Record<TaskStatus, string> = {
                 <button
                   v-if="capabilities?.deleteTask"
                   type="button"
-                  class="text-text-muted hover:text-danger"
+                  class="shrink-0 rounded-lg p-1 text-text-muted transition hover:bg-danger/10 hover:text-danger"
                   :aria-label="t('common.delete')"
-                  @click="deleteTask(task)"
+                  @click="askDelete(task)"
                 >
-                  &#10005;
+                  <AppIcon name="trash" class="h-4 w-4" />
                 </button>
               </div>
 
@@ -359,5 +327,133 @@ const STATUS_DOT: Record<TaskStatus, string> = {
         </section>
       </div>
     </template>
+
+    <!-- Create task modal -->
+    <Teleport to="body">
+      <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="cancelForm" />
+        <div class="relative w-full max-w-lg rounded-2xl bg-surface p-6 shadow-modal">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-brand-accent text-primary-fg">
+                <AppIcon name="tasks" class="h-5 w-5" />
+              </span>
+              <div>
+                <h2 class="text-lg font-bold text-text">{{ t('task.create') }}</h2>
+                <p class="text-sm text-text-muted">{{ t('task.createSubtitle') }}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
+              @click="cancelForm"
+            >
+              <AppIcon name="x" class="h-5 w-5" />
+            </button>
+          </div>
+
+          <form class="mt-5 flex flex-col gap-4" @submit.prevent="createTask">
+            <div>
+              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('task.titlePlaceholder') }}</label>
+              <input
+                ref="titleInput"
+                v-model="newTitle"
+                type="text"
+                maxlength="200"
+                :placeholder="t('task.titlePlaceholder')"
+                class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                @keyup.esc="cancelForm"
+              />
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-text">{{ t('task.priority') }}</label>
+                <AppSelect
+                  :model-value="newPriority"
+                  :options="priorityOptions"
+                  @update:model-value="newPriority = $event as TaskPriority"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-text">{{ t('task.type') }}</label>
+                <AppSelect
+                  :model-value="newType"
+                  :options="typeOptions"
+                  @update:model-value="newType = $event as TaskType"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-text">{{ t('task.dueDate') }}</label>
+                <AppDatePicker v-model="newDueDate" :placeholder="t('task.dueDate')" />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-text">{{ t('task.assignee') }}</label>
+                <AppSelect
+                  v-model="newAssignee"
+                  :options="assigneeOptions"
+                  icon="user"
+                  :placeholder="t('task.unassigned')"
+                />
+              </div>
+            </div>
+
+            <p v-if="errorMsg" class="text-sm text-danger">{{ errorMsg }}</p>
+
+            <div class="flex justify-end gap-3">
+              <button
+                type="button"
+                class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
+                @click="cancelForm"
+              >
+                {{ t('common.cancel') }}
+              </button>
+              <button
+                type="submit"
+                :disabled="creating || !newTitle.trim()"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+              >
+                <AppIcon name="plus" class="h-4 w-4" />
+                {{ creating ? t('common.loading') : t('task.create') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Delete task confirmation -->
+    <Teleport to="body">
+      <div v-if="taskToDelete" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="taskToDelete = null" />
+        <div class="relative w-full max-w-sm rounded-2xl bg-surface p-6 text-center shadow-modal">
+          <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-danger/10 text-danger">
+            <AppIcon name="trash" class="h-6 w-6" />
+          </span>
+          <h2 class="mt-4 text-lg font-bold text-text">{{ t('task.deleteTitle') }}</h2>
+          <p class="mt-2 text-sm text-text-muted">
+            {{ t('task.deleteConfirm', { title: taskToDelete.title }) }}
+          </p>
+          <div class="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              class="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
+              @click="taskToDelete = null"
+            >
+              {{ t('common.cancel') }}
+            </button>
+            <button
+              type="button"
+              :disabled="deleting"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:opacity-90 disabled:opacity-60"
+              @click="confirmDelete"
+            >
+              <AppIcon name="trash" class="h-4 w-4" />
+              {{ deleting ? t('common.loading') : t('common.delete') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

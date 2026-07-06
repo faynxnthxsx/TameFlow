@@ -270,14 +270,9 @@ function timeAgo(iso: string) {
 
 <template>
   <div class="mx-auto max-w-6xl">
-    <!-- Greeting -->
+    <!-- Header -->
     <div class="flex flex-wrap items-end justify-between gap-2">
-      <div>
-        <h1 class="text-2xl font-bold text-text">
-          {{ t('dashboard.greeting', { name: data?.name ?? '' }) }} 👋
-        </h1>
-        <p class="mt-1 text-text-muted">{{ t('dashboard.welcome') }}</p>
-      </div>
+      <h1 class="text-2xl font-bold text-text">{{ t('nav.dashboard') }}</h1>
       <p class="text-sm text-text-muted">{{ today }}</p>
     </div>
 

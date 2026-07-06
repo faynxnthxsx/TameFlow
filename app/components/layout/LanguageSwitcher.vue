@@ -4,8 +4,6 @@ import { SUPPORTED_LOCALES, type LocaleId } from '~/composables/useLocalePrefere
 const { locale, setPreferredLocale } = useLocalePreference()
 const { t } = useI18n()
 
-const FLAGS: Record<LocaleId, string> = { en: '🇬🇧', th: '🇹🇭', ja: '🇯🇵' }
-
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 onClickOutside(root, () => (open.value = false))
@@ -24,7 +22,7 @@ function choose(code: LocaleId) {
       :aria-label="t('language.label')"
       @click="open = !open"
     >
-      <span class="text-base leading-none">{{ FLAGS[locale as LocaleId] }}</span>
+      <AppFlag :code="locale" class="h-3.5 w-5" />
       <span class="uppercase">{{ locale }}</span>
       <AppIcon name="chevron-down" class="h-3.5 w-3.5 text-text-muted" />
     </button>
@@ -50,7 +48,7 @@ function choose(code: LocaleId) {
             "
             @click="choose(code)"
           >
-            <span class="text-base leading-none">{{ FLAGS[code] }}</span>
+            <AppFlag :code="code" class="h-4 w-6" />
             <span class="flex-1 text-left">{{ t(`language.${code}`) }}</span>
             <AppIcon v-if="locale === code" name="check" class="h-4 w-4" />
           </button>

@@ -148,6 +148,7 @@ export type Database = {
           description: string
           status: string
           priority: string
+          type: string
           assignee_id: string | null
           due_date: string | null
           created_by: string | null
@@ -163,6 +164,7 @@ export type Database = {
           description?: string
           status?: string
           priority?: string
+          type?: string
           assignee_id?: string | null
           due_date?: string | null
           created_by?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           description?: string
           status?: string
           priority?: string
+          type?: string
           assignee_id?: string | null
           due_date?: string | null
           created_by?: string | null

@@ -10,8 +10,10 @@ watch(() => route.fullPath, () => (open.value = false))
 // Items without `to` are placeholders for upcoming phases (shown dimmed).
 const navItems = [
   { key: 'nav.dashboard', icon: 'dashboard', to: '/' },
+  { key: 'nav.overview', icon: 'building', to: '/overview' },
   { key: 'nav.workspaces', icon: 'workspace', to: '/workspaces' },
   { key: 'nav.invitations', icon: 'mail', to: '/invitations' },
+  { key: 'nav.chat', icon: 'chat', to: '/chat' },
   { key: 'nav.projects', icon: 'projects', to: '/projects' },
   { key: 'nav.calendar', icon: 'calendar', to: '/calendar' },
   { key: 'nav.activity', icon: 'activity', to: '/activity' },

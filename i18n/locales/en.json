@@ -13,7 +13,9 @@
     "next": "Next",
     "yes": "Yes",
     "no": "No",
-    "or": "or"
+    "or": "or",
+    "today": "Today",
+    "clear": "Clear"
   },
   "dashboard": {
     "greeting": "Hi, {name}",
@@ -40,8 +42,10 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "overview": "Overview",
     "workspaces": "Workspaces",
     "invitations": "Invitations",
+    "chat": "Chat",
     "projects": "Projects",
     "calendar": "Calendar",
     "activity": "Activity",
@@ -51,6 +55,40 @@
     "profile": "Profile",
     "settings": "Settings",
     "logout": "Log out"
+  },
+  "overview": {
+    "title": "Company Overview",
+    "subtitle": "A summary of your company and all its progress",
+    "empty": "You're not part of any team yet.",
+    "teams": "Total teams",
+    "projects": "Total projects",
+    "tasks": "Total tasks",
+    "completion": "Completed",
+    "tasksDone": "done",
+    "progress": "Progress",
+    "members": "Members",
+    "progressTitle": "Project progress",
+    "taskTypes": "Task types",
+    "companyMembers": "Company members",
+    "recentProjects": "Recent projects",
+    "recentActivity": "Recent activity",
+    "viewAll": "View all",
+    "totalPeople": "{count} total",
+    "noProjects": "No projects yet",
+    "noActivity": "No activity yet",
+    "noMembers": "No members yet",
+    "inProgress": "In progress",
+    "todo": "To do",
+    "dueSoon": "Due soon",
+    "overdue": "Overdue",
+    "createdOn": "Created {date}",
+    "inContext": "in {name}",
+    "by": "by {name}",
+    "act": {
+      "project_created": "Created project",
+      "task_created": "Created task",
+      "task_done": "Completed task"
+    }
   },
   "theme": {
     "label": "Appearance",
@@ -138,19 +176,45 @@
     "members": "Members",
     "createdAt": "Created",
     "joinedAt": "Joined",
-    "you": "You"
+    "you": "You",
+    "subtitle": "Manage and collaborate with your teams across workspaces",
+    "createSubtitle": "Invite your team to collaborate",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "progress": "Progress",
+    "updatedAt": "Updated",
+    "gridView": "Grid view",
+    "listView": "List view"
   },
   "project": {
     "sectionTitle": "Projects",
     "create": "Create project",
     "namePlaceholder": "Project name",
     "descriptionPlaceholder": "Description (optional)",
-    "empty": "No projects yet."
+    "empty": "No projects yet.",
+    "createSubtitle": "Organize your team's work into a project",
+    "listSubtitle": "Manage and track the progress of all your projects",
+    "searchPlaceholder": "Search projects...",
+    "statTotal": "Total projects",
+    "statActive": "In progress",
+    "statDone": "Completed",
+    "statNotStarted": "Not started",
+    "tabAll": "All",
+    "tabActive": "In progress",
+    "tabNotStarted": "Not started",
+    "tabDone": "Completed",
+    "sortRecent": "Latest",
+    "sortProgress": "Progress",
+    "sortName": "Name",
+    "perPage": "per page",
+    "showing": "Showing {from}-{to} of {total}",
+    "emptyFiltered": "No projects match this filter."
   },
   "task": {
     "create": "Create task",
     "titlePlaceholder": "What needs to be done?",
     "priority": "Priority",
+    "type": "Type",
     "dueDate": "Due date",
     "assignee": "Assignee",
     "unassigned": "Unassigned",
@@ -167,7 +231,10 @@
     "checklistEmpty": "No checklist items yet",
     "comments": "Comments",
     "commentPlaceholder": "Write a comment...",
-    "noComments": "No comments yet."
+    "noComments": "No comments yet.",
+    "createSubtitle": "Add a task to this project and assign it to your team",
+    "selectPlaceholder": "Select...",
+    "deleteTitle": "Delete task?"
   },
   "taskStatus": {
     "todo": "To do",
@@ -179,6 +246,29 @@
     "medium": "Medium",
     "high": "High",
     "critical": "Critical"
+  },
+  "taskType": {
+    "dev": "Development",
+    "design": "Design",
+    "test": "Testing",
+    "other": "Other"
+  },
+  "chat": {
+    "title": "Chat",
+    "subtitle": "Team conversations",
+    "searchTeams": "Search chats...",
+    "yourTeams": "Your teams",
+    "noTeams": "You're not part of any team yet.",
+    "selectTeam": "Select a team to start chatting",
+    "empty": "No messages yet. Say hello!",
+    "placeholder": "Type a message...",
+    "color": "Color",
+    "viewerOnly": "Viewers can read but not send messages.",
+    "details": "Team details",
+    "members": "Members",
+    "sharedLinks": "Shared links",
+    "noLinks": "No links shared yet.",
+    "createdOn": "Created {date}"
   },
   "invite": {
     "sectionTitle": "Pending invitations",
@@ -192,7 +282,29 @@
     "noneForMe": "You have no invitations right now.",
     "invitedAs": "Invited as",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "mySubtitle": "Invitations to join a workspace or team",
+    "faq": "FAQ",
+    "emptyTitle": "You have no invitations yet",
+    "emptySubtitle": "When someone invites you to a workspace or team, it will show up here.",
+    "createOwn": "Create your own workspace",
+    "howTitle": "How it works",
+    "step1Title": "Receive an invitation",
+    "step1Desc": "When someone invites you to a workspace, you'll get the invitation here.",
+    "step2Title": "Accept the invitation",
+    "step2Desc": "Click \"Accept\" to join the workspace and start working together.",
+    "step3Title": "Start working",
+    "step3Desc": "Get instant access to projects, tasks, and chat with your team.",
+    "sendTitle": "Invite a teammate",
+    "sendSubtitle": "Send an invitation to join this workspace",
+    "roleLabel": "Role",
+    "shareTitle": "Invitation sent!",
+    "shareSubtitle": "Share this so {email} can join the team",
+    "shareMessage": "You're invited to join \"{workspace}\" on TeamFlow. Sign in with {email}, then open Invitations to accept: {url}",
+    "copyLink": "Copy message",
+    "copied": "Copied!",
+    "done": "Done",
+    "shareVia": "Share via"
   },
   "role": {
     "owner": "Owner",
@@ -214,13 +326,21 @@
   "activity": {
     "empty": "No activity yet.",
     "createdProject": "created project",
-    "createdTask": "created task"
+    "createdTask": "created task",
+    "subtitle": "Recent updates across your workspaces",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earlier": "Earlier"
   },
   "members": {
     "empty": "No members found.",
     "remove": "Remove",
     "removeConfirm": "Remove {name} from {workspace}?",
-    "managed": "Managed by you"
+    "managed": "Managed by you",
+    "subtitle": "Manage roles and members across your workspaces",
+    "totalMembers": "Members",
+    "totalTeams": "Teams",
+    "removeTitle": "Remove member?"
   },
   "reports": {
     "totalTasks": "Total tasks",
@@ -231,17 +351,43 @@
     "byPriority": "Tasks by priority",
     "empty": "No task data yet.",
     "daily": "Daily activity",
-    "tasksCreated": "Tasks created"
+    "tasksCreated": "Tasks created",
+    "subtitle": "Insights into your team's task activity"
   },
   "settings": {
     "appearanceDesc": "Choose how TeamFlow looks.",
     "languageDesc": "Choose your preferred language.",
     "account": "Account",
     "accountDesc": "Manage your profile details.",
-    "editProfile": "Edit profile"
+    "editProfile": "Edit profile",
+    "subtitle": "Manage your preferences and account",
+    "signOut": "Sign out",
+    "signOutDesc": "Sign out of your account on this device.",
+    "about": "About",
+    "aboutDesc": "TeamFlow — a collaborative team workspace.",
+    "version": "Version"
   },
   "calendar": {
     "today": "Today",
-    "empty": "No tasks with due dates."
+    "empty": "No tasks with due dates.",
+    "subtitle": "Track your team's deadlines at a glance",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "thisWeek": "This week",
+    "upcoming": "Upcoming deadlines",
+    "noUpcoming": "No upcoming deadlines",
+    "legend": "Priority"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You're all caught up",
+    "invitationsHeading": "Pending invitations",
+    "viewAll": "View all invitations"
+  },
+  "search": {
+    "workspaces": "Workspaces",
+    "projects": "Projects",
+    "noResults": "No results found",
+    "hint": "Search workspaces and projects"
   }
 }

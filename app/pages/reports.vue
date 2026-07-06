@@ -77,16 +77,17 @@ function widthPct(value: number) {
 }
 
 const tiles = computed(() => [
-  { key: 'totalTasks', value: data.value?.total ?? 0, tint: 'bg-primary/10 text-primary' },
-  { key: 'completed', value: data.value?.done ?? 0, tint: 'bg-success/10 text-success' },
-  { key: 'completionRate', value: `${data.value?.completionRate ?? 0}%`, tint: 'bg-info/10 text-info' },
-  { key: 'overdue', value: data.value?.overdue ?? 0, tint: 'bg-danger/10 text-danger' }
+  { key: 'totalTasks', value: data.value?.total ?? 0, icon: 'tasks', tint: 'bg-primary/10 text-primary' },
+  { key: 'completed', value: data.value?.done ?? 0, icon: 'check', tint: 'bg-success/10 text-success' },
+  { key: 'completionRate', value: `${data.value?.completionRate ?? 0}%`, icon: 'trending-up', tint: 'bg-info/10 text-info' },
+  { key: 'overdue', value: data.value?.overdue ?? 0, icon: 'clock', tint: 'bg-danger/10 text-danger' }
 ])
 </script>
 
 <template>
   <div class="mx-auto max-w-4xl">
     <h1 class="text-2xl font-bold text-text">{{ t('nav.reports') }}</h1>
+    <p class="mt-1 text-sm text-text-muted">{{ t('reports.subtitle') }}</p>
 
     <p v-if="pending" class="mt-6 text-text-muted">{{ t('common.loading') }}</p>
     <p
@@ -103,7 +104,10 @@ const tiles = computed(() => [
           :key="tile.key"
           class="rounded-2xl border border-border bg-surface p-5 shadow-card"
         >
-          <p class="text-3xl font-bold text-text">{{ tile.value }}</p>
+          <span class="grid h-10 w-10 place-items-center rounded-xl" :class="tile.tint">
+            <AppIcon :name="tile.icon" class="h-5 w-5" />
+          </span>
+          <p class="mt-3 text-3xl font-bold text-text">{{ tile.value }}</p>
           <p class="mt-1 text-sm text-text-muted">{{ t(`reports.${tile.key}`) }}</p>
         </div>
       </div>

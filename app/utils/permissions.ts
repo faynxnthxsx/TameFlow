@@ -4,6 +4,7 @@ export interface Capabilities {
   manageWorkspace: boolean
   manageMembers: boolean
   manageProjects: boolean
+  manageChat: boolean
   createTask: boolean
   editAnyTask: boolean
   editOwnTask: boolean
@@ -16,6 +17,7 @@ const CAPABILITIES_BY_ROLE: Record<WorkspaceRole, Capabilities> = {
     manageWorkspace: true,
     manageMembers: true,
     manageProjects: true,
+    manageChat: true,
     createTask: true,
     editAnyTask: true,
     editOwnTask: true,
@@ -26,6 +28,7 @@ const CAPABILITIES_BY_ROLE: Record<WorkspaceRole, Capabilities> = {
     manageWorkspace: false,
     manageMembers: true,
     manageProjects: true,
+    manageChat: true,
     createTask: true,
     editAnyTask: true,
     editOwnTask: true,
@@ -36,6 +39,7 @@ const CAPABILITIES_BY_ROLE: Record<WorkspaceRole, Capabilities> = {
     manageWorkspace: false,
     manageMembers: false,
     manageProjects: false,
+    manageChat: false,
     createTask: true,
     editAnyTask: false,
     editOwnTask: true,
@@ -46,6 +50,7 @@ const CAPABILITIES_BY_ROLE: Record<WorkspaceRole, Capabilities> = {
     manageWorkspace: false,
     manageMembers: false,
     manageProjects: false,
+    manageChat: false,
     createTask: false,
     editAnyTask: false,
     editOwnTask: false,

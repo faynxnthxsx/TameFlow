@@ -13,7 +13,9 @@
     "next": "次へ",
     "yes": "はい",
     "no": "いいえ",
-    "or": "または"
+    "or": "または",
+    "today": "今日",
+    "clear": "クリア"
   },
   "dashboard": {
     "greeting": "こんにちは、{name}さん",
@@ -40,8 +42,10 @@
   },
   "nav": {
     "dashboard": "ダッシュボード",
+    "overview": "全体ビュー",
     "workspaces": "ワークスペース",
     "invitations": "招待",
+    "chat": "チャット",
     "projects": "プロジェクト",
     "calendar": "カレンダー",
     "activity": "アクティビティ",
@@ -51,6 +55,40 @@
     "profile": "プロフィール",
     "settings": "設定",
     "logout": "ログアウト"
+  },
+  "overview": {
+    "title": "会社全体ビュー",
+    "subtitle": "会社全体と進捗のまとめ",
+    "empty": "まだどのチームにも参加していません。",
+    "teams": "チーム総数",
+    "projects": "プロジェクト総数",
+    "tasks": "タスク総数",
+    "completion": "完了率",
+    "tasksDone": "完了",
+    "progress": "進捗",
+    "members": "メンバー",
+    "progressTitle": "プロジェクトの進捗",
+    "taskTypes": "タスクの種類",
+    "companyMembers": "会社のメンバー",
+    "recentProjects": "最近のプロジェクト",
+    "recentActivity": "最近のアクティビティ",
+    "viewAll": "すべて表示",
+    "totalPeople": "合計 {count} 人",
+    "noProjects": "プロジェクトはまだありません",
+    "noActivity": "アクティビティはまだありません",
+    "noMembers": "メンバーはまだいません",
+    "inProgress": "進行中",
+    "todo": "未着手",
+    "dueSoon": "期限間近",
+    "overdue": "期限超過",
+    "createdOn": "{date} 作成",
+    "inContext": "{name} 内",
+    "by": "{name} による",
+    "act": {
+      "project_created": "プロジェクトを作成",
+      "task_created": "タスクを作成",
+      "task_done": "タスクを完了"
+    }
   },
   "theme": {
     "label": "表示モード",
@@ -138,19 +176,45 @@
     "members": "メンバー",
     "createdAt": "作成日",
     "joinedAt": "参加日",
-    "you": "あなた"
+    "you": "あなた",
+    "subtitle": "ワークスペースでチームを管理し、共同作業しましょう",
+    "createSubtitle": "チームを招待して一緒に作業しましょう",
+    "projects": "プロジェクト",
+    "tasks": "タスク",
+    "progress": "進捗",
+    "updatedAt": "更新日",
+    "gridView": "グリッド表示",
+    "listView": "リスト表示"
   },
   "project": {
     "sectionTitle": "プロジェクト",
     "create": "プロジェクトを作成",
     "namePlaceholder": "プロジェクト名",
     "descriptionPlaceholder": "説明(任意)",
-    "empty": "まだプロジェクトがありません。"
+    "empty": "まだプロジェクトがありません。",
+    "createSubtitle": "チームの作業をプロジェクトにまとめましょう",
+    "listSubtitle": "すべてのプロジェクトの進捗を管理・追跡します",
+    "searchPlaceholder": "プロジェクトを検索...",
+    "statTotal": "プロジェクト総数",
+    "statActive": "進行中",
+    "statDone": "完了",
+    "statNotStarted": "未着手",
+    "tabAll": "すべて",
+    "tabActive": "進行中",
+    "tabNotStarted": "未着手",
+    "tabDone": "完了",
+    "sortRecent": "最新",
+    "sortProgress": "進捗",
+    "sortName": "名前",
+    "perPage": "件/ページ",
+    "showing": "{total}件中 {from}-{to} を表示",
+    "emptyFiltered": "このフィルターに一致するプロジェクトはありません"
   },
   "task": {
     "create": "タスクを作成",
     "titlePlaceholder": "何をしますか?",
     "priority": "優先度",
+    "type": "種類",
     "dueDate": "期限",
     "assignee": "担当者",
     "unassigned": "未割り当て",
@@ -167,7 +231,10 @@
     "checklistEmpty": "チェックリスト項目がありません",
     "comments": "コメント",
     "commentPlaceholder": "コメントを書く...",
-    "noComments": "コメントはまだありません"
+    "noComments": "コメントはまだありません",
+    "createSubtitle": "このプロジェクトにタスクを追加してチームに割り当てます",
+    "selectPlaceholder": "選択...",
+    "deleteTitle": "タスクを削除しますか？"
   },
   "taskStatus": {
     "todo": "未着手",
@@ -179,6 +246,29 @@
     "medium": "中",
     "high": "高",
     "critical": "緊急"
+  },
+  "taskType": {
+    "dev": "開発",
+    "design": "デザイン",
+    "test": "テスト",
+    "other": "その他"
+  },
+  "chat": {
+    "title": "チャット",
+    "subtitle": "チームの会話",
+    "searchTeams": "チャットを検索...",
+    "yourTeams": "あなたのチーム",
+    "noTeams": "まだどのチームにも参加していません。",
+    "selectTeam": "チームを選択してチャットを開始",
+    "empty": "メッセージはまだありません。挨拶してみましょう！",
+    "placeholder": "メッセージを入力...",
+    "color": "カラー",
+    "viewerOnly": "閲覧者はメッセージを読めますが送信できません。",
+    "details": "チームの詳細",
+    "members": "メンバー",
+    "sharedLinks": "共有リンク",
+    "noLinks": "共有リンクはまだありません。",
+    "createdOn": "作成日 {date}"
   },
   "invite": {
     "sectionTitle": "保留中の招待",
@@ -192,7 +282,29 @@
     "noneForMe": "現在、招待はありません。",
     "invitedAs": "招待された役割",
     "accept": "承認",
-    "decline": "辞退"
+    "decline": "辞退",
+    "mySubtitle": "ワークスペースやチームへの招待一覧",
+    "faq": "よくある質問",
+    "emptyTitle": "招待はまだありません",
+    "emptySubtitle": "誰かがあなたをワークスペースやチームに招待すると、ここに表示されます。",
+    "createOwn": "自分のワークスペースを作成",
+    "howTitle": "使い方",
+    "step1Title": "招待を受け取る",
+    "step1Desc": "誰かがあなたをワークスペースに招待すると、ここに招待が届きます。",
+    "step2Title": "招待を承認する",
+    "step2Desc": "「承認」をクリックしてワークスペースに参加し、一緒に作業を始めましょう。",
+    "step3Title": "作業を始める",
+    "step3Desc": "プロジェクト、タスク、チームチャットにすぐにアクセスできます。",
+    "sendTitle": "メンバーを招待",
+    "sendSubtitle": "このワークスペースへの招待を送信します",
+    "roleLabel": "ロール",
+    "shareTitle": "招待を送信しました！",
+    "shareSubtitle": "{email} が参加できるよう共有しましょう",
+    "shareMessage": "TeamFlowの「{workspace}」チームに招待されました。{email} でサインインし、招待ページから承認してください: {url}",
+    "copyLink": "メッセージをコピー",
+    "copied": "コピーしました！",
+    "done": "完了",
+    "shareVia": "共有"
   },
   "role": {
     "owner": "オーナー",
@@ -214,13 +326,21 @@
   "activity": {
     "empty": "アクティビティはまだありません",
     "createdProject": "がプロジェクトを作成",
-    "createdTask": "がタスクを作成"
+    "createdTask": "がタスクを作成",
+    "subtitle": "ワークスペースの最近の更新",
+    "today": "今日",
+    "yesterday": "昨日",
+    "earlier": "それ以前"
   },
   "members": {
     "empty": "メンバーが見つかりません",
     "remove": "削除",
     "removeConfirm": "{name}を{workspace}から削除しますか?",
-    "managed": "あなたが管理"
+    "managed": "あなたが管理",
+    "subtitle": "すべてのワークスペースのロールとメンバーを管理",
+    "totalMembers": "メンバー",
+    "totalTeams": "チーム",
+    "removeTitle": "メンバーを削除しますか？"
   },
   "reports": {
     "totalTasks": "タスク合計",
@@ -231,17 +351,43 @@
     "byPriority": "優先度別タスク",
     "empty": "タスクデータがありません",
     "daily": "日次アクティビティ",
-    "tasksCreated": "作成されたタスク"
+    "tasksCreated": "作成されたタスク",
+    "subtitle": "チームのタスク活動のインサイト"
   },
   "settings": {
     "appearanceDesc": "ライト/ダークを選択します。",
     "languageDesc": "使用する言語を選択します。",
     "account": "アカウント",
     "accountDesc": "プロフィールを管理します。",
-    "editProfile": "プロフィールを編集"
+    "editProfile": "プロフィールを編集",
+    "subtitle": "設定とアカウントを管理",
+    "signOut": "ログアウト",
+    "signOutDesc": "このデバイスでアカウントからログアウトします",
+    "about": "情報",
+    "aboutDesc": "TeamFlow — チームのコラボレーションワークスペース",
+    "version": "バージョン"
   },
   "calendar": {
     "today": "今日",
-    "empty": "期限のあるタスクがありません"
+    "empty": "期限のあるタスクがありません",
+    "subtitle": "チームの締め切りを一目で把握",
+    "overdue": "期限超過",
+    "dueToday": "今日締め切り",
+    "thisWeek": "今週",
+    "upcoming": "近日の締め切り",
+    "noUpcoming": "近日の締め切りはありません",
+    "legend": "優先度"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "新しい通知はありません",
+    "invitationsHeading": "保留中の招待",
+    "viewAll": "すべての招待を表示"
+  },
+  "search": {
+    "workspaces": "ワークスペース",
+    "projects": "プロジェクト",
+    "noResults": "結果が見つかりません",
+    "hint": "ワークスペースとプロジェクトを検索"
   }
 }

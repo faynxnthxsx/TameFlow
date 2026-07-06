@@ -77,43 +77,77 @@ function timeAgo(iso: string) {
   }
   return rtf.format(0, 'second')
 }
+
+// Bucket the feed into Today / Yesterday / dated sections for a timeline look.
+function dayStart(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+function bucketLabel(iso: string) {
+  const today = dayStart(new Date())
+  const day = dayStart(new Date(iso))
+  const diffDays = Math.round((today - day) / 86_400_000)
+  if (diffDays <= 0) return t('activity.today')
+  if (diffDays === 1) return t('activity.yesterday')
+  return new Date(iso).toLocaleDateString(locale.value, { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+const groups = computed(() => {
+  const out: { label: string; items: FeedItem[] }[] = []
+  for (const item of data.value?.items ?? []) {
+    const label = bucketLabel(item.at)
+    const last = out[out.length - 1]
+    if (last && last.label === label) last.items.push(item)
+    else out.push({ label, items: [item] })
+  }
+  return out
+})
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl">
+  <div class="mx-auto max-w-3xl">
     <h1 class="text-2xl font-bold text-text">{{ t('nav.activity') }}</h1>
+    <p class="mt-1 text-sm text-text-muted">{{ t('activity.subtitle') }}</p>
 
     <p v-if="pending" class="mt-6 text-text-muted">{{ t('common.loading') }}</p>
     <p
       v-else-if="!data || data.items.length === 0"
-      class="mt-6 rounded-2xl border border-dashed border-border p-10 text-center text-text-muted"
+      class="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-12 text-center text-text-muted"
     >
+      <AppIcon name="activity" class="h-8 w-8 text-text-muted/50" />
       {{ t('activity.empty') }}
     </p>
 
-    <ul v-else class="mt-6 space-y-1">
-      <li v-for="item in data.items" :key="item.id">
-        <NuxtLink
-          :to="item.link"
-          class="flex items-start gap-3 rounded-xl p-3 transition hover:bg-surface"
-        >
-          <span
-            class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full"
-            :class="item.kind === 'task' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'"
-          >
-            <AppIcon :name="item.kind === 'task' ? 'tasks' : 'projects'" class="h-5 w-5" />
-          </span>
-          <div class="min-w-0 flex-1">
-            <p class="text-sm text-text">
-              <span class="font-medium">{{ item.actor ?? '—' }}</span>
-              {{ t(item.kind === 'task' ? 'activity.createdTask' : 'activity.createdProject') }}
-              <span class="font-medium">{{ item.title }}</span>
-            </p>
-            <p v-if="item.context" class="truncate text-xs text-text-muted">{{ item.context }}</p>
-          </div>
-          <span class="shrink-0 text-xs text-text-muted">{{ timeAgo(item.at) }}</span>
-        </NuxtLink>
-      </li>
-    </ul>
+    <div v-else class="mt-6 space-y-6">
+      <section v-for="group in groups" :key="group.label">
+        <h2 class="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+          {{ group.label }}
+        </h2>
+        <ul class="relative ml-4 space-y-1 border-l border-border pl-6">
+          <li v-for="item in group.items" :key="item.id" class="relative">
+            <!-- Timeline node -->
+            <span
+              class="absolute -left-[31px] top-3 grid h-8 w-8 place-items-center rounded-full ring-4 ring-bg"
+              :class="item.kind === 'task' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'"
+            >
+              <AppIcon :name="item.kind === 'task' ? 'tasks' : 'projects'" class="h-4 w-4" />
+            </span>
+            <NuxtLink
+              :to="item.link"
+              class="flex items-start gap-3 rounded-xl border border-transparent p-3 transition hover:border-border hover:bg-surface"
+            >
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-text">
+                  <span class="font-medium">{{ item.actor ?? '—' }}</span>
+                  {{ t(item.kind === 'task' ? 'activity.createdTask' : 'activity.createdProject') }}
+                  <span class="font-medium">{{ item.title }}</span>
+                </p>
+                <p v-if="item.context" class="truncate text-xs text-text-muted">{{ item.context }}</p>
+              </div>
+              <span class="shrink-0 text-xs text-text-muted">{{ timeAgo(item.at) }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
+      </section>
+    </div>
   </div>
 </template>

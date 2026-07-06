@@ -21,6 +21,13 @@ describe('resolveCapabilities', () => {
     expect(caps.editAnyTask).toBe(false)
     expect(caps.editOwnTask).toBe(true)
   })
+
+  it('lets only owners and admins manage chat settings', () => {
+    expect(resolveCapabilities('owner').manageChat).toBe(true)
+    expect(resolveCapabilities('admin').manageChat).toBe(true)
+    expect(resolveCapabilities('member').manageChat).toBe(false)
+    expect(resolveCapabilities('viewer').manageChat).toBe(false)
+  })
 })
 
 describe('canEditTask', () => {

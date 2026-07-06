@@ -2,8 +2,12 @@
 const { t } = useI18n()
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
+const route = useRoute()
 
 const sidebarOpen = useState('tf-sidebar-open', () => false)
+
+// Dashboard, company overview and invitations don't need the search box.
+const showSearch = computed(() => !['/', '/overview', '/invitations'].includes(route.path))
 
 async function logout() {
   await supabase.auth.signOut()
@@ -24,26 +28,12 @@ async function logout() {
       <AppIcon name="menu" class="h-5 w-5" />
     </button>
 
-    <div class="relative hidden max-w-sm flex-1 items-center sm:flex">
-      <AppIcon name="search" class="pointer-events-none absolute left-3 h-4 w-4 text-text-muted" />
-      <input
-        type="text"
-        :placeholder="`${t('common.search')}...`"
-        class="w-full rounded-lg border border-border bg-surface-alt py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:bg-surface focus:outline-none"
-      />
-    </div>
+    <LayoutGlobalSearch v-if="showSearch" />
 
     <div class="flex flex-1 items-center justify-end gap-2 sm:gap-3">
       <LayoutLanguageSwitcher />
       <LayoutThemeSwitcher />
-
-      <button
-        type="button"
-        class="relative grid h-9 w-9 place-items-center rounded-lg text-text-muted hover:bg-surface-alt hover:text-text"
-        :aria-label="t('nav.notifications')"
-      >
-        <AppIcon name="bell" class="h-5 w-5" />
-      </button>
+      <LayoutNotificationsBell />
 
       <button
         v-if="user"
