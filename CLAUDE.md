@@ -18,7 +18,7 @@ Tests use a standalone `vitest.config.ts` (happy-dom, `globals: true`, `~`/`@` a
 
 Nuxt 4 (`app/` directory structure) + Pinia + VueUse + `@nuxtjs/supabase` + `@nuxtjs/i18n` + Tailwind. Env vars in `.env` (see `.env.example`): `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` (server-only, for future `server/api/*` routes that bypass RLS).
 
-The project is built in phases, roughly one migration per phase: Phase 0 theming/i18n/layout/`user_profiles` (`20260703*`), Phase 1 auth, Phase 2 workspaces + membership, Phase 3 projects + tasks, Phase 4 invitations (the `20260704*` timestamps), then task checklists, task comments, and avatar storage (the `20260705*` timestamps), then Phase 6 team chat + company overview (`20260706*`), then Discord-style shareable invite links (`20260707*`). Data access is currently client-side via `useSupabaseClient()` guarded by RLS (see below); there are no `server/api/*` routes yet.
+The project is built in phases, roughly one migration per phase: Phase 0 theming/i18n/layout/`user_profiles` (`20260703*`), Phase 1 auth, Phase 2 workspaces + membership, Phase 3 projects + tasks, Phase 4 invitations (the `20260704*` timestamps), then task checklists, task comments, and avatar storage (the `20260705*` timestamps), then Phase 6 team chat + company overview (`20260706*`), then Discord-style shareable invite links (`20260707*`). Data access is currently client-side via `useSupabaseClient()` guarded by RLS (see below); the only `server/api/*` route is `keep-alive.get.ts`, a daily Vercel Cron ping (`vercel.json`) that does one lightweight Supabase read so the free-tier project doesn't pause after ~7 days idle.
 
 ## Architecture
 
