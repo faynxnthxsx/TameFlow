@@ -246,9 +246,9 @@ function isDone(i: FeedItem) {
             </button>
           </div>
 
-          <div class="flex items-center gap-2">
-            <div class="w-36"><AppSelect v-model="team" :options="teamOptions" icon="workspace" /></div>
-            <div class="w-40"><AppSelect v-model="sort" :options="sortOptions" icon="reports" /></div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="w-32 sm:w-36"><AppSelect v-model="team" :options="teamOptions" icon="workspace" /></div>
+            <div class="w-36 sm:w-40"><AppSelect v-model="sort" :options="sortOptions" icon="reports" /></div>
             <div class="flex rounded-xl border border-border bg-surface p-1">
               <button
                 type="button"

@@ -297,7 +297,7 @@ function timeAgo(iso: string) {
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
       <section class="rounded-2xl border border-border bg-surface p-5 shadow-card">
         <h2 class="text-lg font-semibold text-text">{{ t('dashboard.taskOverview') }}</h2>
-        <div class="mt-5 flex items-center gap-6">
+        <div class="mt-5 flex flex-col items-center gap-6 sm:flex-row">
           <div class="relative grid h-36 w-36 shrink-0 place-items-center rounded-full" :style="donut.style">
             <div class="grid h-24 w-24 place-items-center rounded-full bg-surface text-center">
               <div>

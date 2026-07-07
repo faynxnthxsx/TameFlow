@@ -172,11 +172,11 @@ const ACTIVITY_META: Record<string, { icon: string; tint: string }> = {
         <div
           v-for="s in STATS"
           :key="s.key"
-          class="rounded-2xl border border-border bg-surface p-4 shadow-card"
+          class="min-w-0 rounded-2xl border border-border bg-surface p-4 shadow-card"
         >
-          <div class="flex items-center justify-between">
-            <p class="text-sm text-text-muted">{{ t(`overview.${s.key}`) }}</p>
-            <span class="grid h-9 w-9 place-items-center rounded-lg" :class="s.tint">
+          <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 truncate text-sm text-text-muted">{{ t(`overview.${s.key}`) }}</p>
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg" :class="s.tint">
               <AppIcon :name="s.icon" class="h-5 w-5" />
             </span>
           </div>
@@ -189,7 +189,7 @@ const ACTIVITY_META: Record<string, { icon: string; tint: string }> = {
         <!-- project progress -->
         <section class="rounded-2xl border border-border bg-surface p-5 shadow-card">
           <h2 class="font-semibold text-text">{{ t('overview.progressTitle') }}</h2>
-          <div class="mt-4 flex items-center gap-6">
+          <div class="mt-4 flex flex-col items-center gap-6 sm:flex-row">
             <div class="relative h-36 w-36 shrink-0">
               <div class="h-full w-full rounded-full" :style="{ background: donut(statusSegments) }" />
               <div class="absolute inset-[22%] grid place-items-center rounded-full bg-surface text-center">
@@ -217,7 +217,7 @@ const ACTIVITY_META: Record<string, { icon: string; tint: string }> = {
         <!-- task type -->
         <section class="rounded-2xl border border-border bg-surface p-5 shadow-card">
           <h2 class="font-semibold text-text">{{ t('overview.taskTypes') }}</h2>
-          <div class="mt-4 flex items-center gap-6">
+          <div class="mt-4 flex flex-col items-center gap-6 sm:flex-row">
             <div class="relative h-36 w-36 shrink-0">
               <div class="h-full w-full rounded-full" :style="{ background: donut(typeSegments) }" />
               <div class="absolute inset-[22%] grid place-items-center rounded-full bg-surface text-center">
