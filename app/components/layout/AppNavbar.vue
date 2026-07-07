@@ -1,18 +1,12 @@
 <script setup lang="ts">
 const { t } = useI18n()
-const user = useSupabaseUser()
-const supabase = useSupabaseClient()
 const route = useRoute()
 
 const sidebarOpen = useState('tf-sidebar-open', () => false)
 
 // Dashboard, company overview and invitations don't need the search box.
 const showSearch = computed(() => !['/', '/overview', '/invitations'].includes(route.path))
-
-async function logout() {
-  await supabase.auth.signOut()
-  await navigateTo('/login')
-}
+// Signing out lives on the Settings page (Account section), not the navbar.
 </script>
 
 <template>
@@ -34,16 +28,6 @@ async function logout() {
       <LayoutLanguageSwitcher />
       <LayoutThemeSwitcher />
       <LayoutNotificationsBell />
-
-      <button
-        v-if="user"
-        type="button"
-        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-muted hover:bg-surface-alt hover:text-text"
-        @click="logout"
-      >
-        <AppIcon name="logout" class="h-4 w-4" />
-        <span class="hidden sm:inline">{{ t('nav.logout') }}</span>
-      </button>
     </div>
   </header>
 </template>

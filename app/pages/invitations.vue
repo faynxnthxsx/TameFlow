@@ -16,6 +16,22 @@ const busyId = ref<string | null>(null)
 const errorMsg = ref('')
 const showFaq = ref(false)
 
+// "Join with an invite link" box — accepts a full /join/<token> URL or a bare
+// token, then hands off to the /join landing page to confirm and redeem.
+const joinInput = ref('')
+function parseToken(raw: string) {
+  const s = raw.trim()
+  const m = s.match(/\/join\/([^/?#\s]+)/)
+  if (m) return m[1]
+  // Bare token, or a URL without /join/ — take the last path-ish segment.
+  return s.split(/[/?#]/).filter(Boolean).pop() ?? s
+}
+function goToLink() {
+  const token = parseToken(joinInput.value)
+  if (!token) return
+  navigateTo(`/join/${encodeURIComponent(token)}`)
+}
+
 async function accept(id: string) {
   busyId.value = id
   errorMsg.value = ''
@@ -79,6 +95,35 @@ const STEPS = [
       </button>
     </div>
 
+    <!-- Join with an invite link -->
+    <div class="mt-6 rounded-2xl border border-border bg-surface p-5 shadow-card">
+      <div class="flex items-center gap-3">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          <AppIcon name="link" class="h-5 w-5" />
+        </span>
+        <div class="min-w-0">
+          <p class="font-semibold text-text">{{ t('invite.joinByLinkTitle') }}</p>
+          <p class="text-sm text-text-muted">{{ t('invite.joinByLinkSubtitle') }}</p>
+        </div>
+      </div>
+      <form class="mt-4 flex flex-col gap-2 sm:flex-row" @submit.prevent="goToLink">
+        <input
+          v-model="joinInput"
+          type="text"
+          :placeholder="t('invite.joinByLinkPlaceholder')"
+          class="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+        <button
+          type="submit"
+          :disabled="!joinInput.trim()"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+        >
+          <AppIcon name="user-plus" class="h-4 w-4" />
+          {{ t('invite.joinByLinkButton') }}
+        </button>
+      </form>
+    </div>
+
     <p v-if="pending" class="mt-10 text-center text-text-muted">{{ t('common.loading') }}</p>
 
     <template v-else>
@@ -87,7 +132,7 @@ const STEPS = [
       <!-- Empty state -->
       <div
         v-if="!data || data.length === 0"
-        class="flex min-h-[62vh] flex-col items-center justify-center px-6 text-center"
+        class="flex min-h-[46vh] flex-col items-center justify-center px-6 text-center"
       >
         <!-- Envelope illustration -->
         <svg

@@ -5,7 +5,7 @@ import {
   isTaskStatus,
   nextStatus,
   prevStatus
-} from '~/utils/tasks'
+} from '../../app/utils/tasks'
 
 describe('isTaskStatus / isTaskPriority', () => {
   it('accepts known values', () => {

@@ -10,10 +10,19 @@ const route = useRoute()
 
 const failed = ref(!!route.query.error)
 
+// Honor a page stashed by an invite link (/join/<token>) so OAuth sign-in
+// returns there; otherwise land on the dashboard.
+function postLoginTarget() {
+  if (typeof window === 'undefined') return '/'
+  const dest = localStorage.getItem('tf_post_login')
+  localStorage.removeItem('tf_post_login')
+  return dest || '/'
+}
+
 watch(
   user,
   (u) => {
-    if (u) navigateTo('/', { replace: true })
+    if (u) navigateTo(postLoginTarget(), { replace: true })
   },
   { immediate: true }
 )

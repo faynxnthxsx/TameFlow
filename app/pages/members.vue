@@ -141,7 +141,7 @@ const ROLE_BADGE_CLASSES: Record<string, string> = {
       <section
         v-for="group in data.groups"
         :key="group.workspaceId"
-        class="overflow-hidden rounded-2xl border border-border bg-surface shadow-card"
+        class="rounded-2xl border border-border bg-surface shadow-card"
       >
         <div class="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
           <NuxtLink

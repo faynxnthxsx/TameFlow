@@ -306,7 +306,7 @@ function initials(name: string) {
         <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-modal">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-3">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-brand-accent text-primary-fg">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-fg">
                 <AppIcon name="workspace" class="h-5 w-5" />
               </span>
               <div>

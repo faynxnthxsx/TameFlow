@@ -10,6 +10,9 @@ const store = useWorkspacesStore()
 const chat = useChatStore()
 const supabase = useSupabaseClient()
 
+// Remembers which conversation you had open, so leaving /chat and coming back
+// (or reloading) drops you straight back into it instead of the team picker.
+const LAST_TEAM_KEY = 'tf_chat_last_team'
 const activeId = ref<string | null>(null)
 const draft = ref('')
 const myId = ref<string | null>(null)
@@ -70,6 +73,7 @@ const sharedLinks = computed(() => {
 
 async function openTeam(id: string) {
   activeId.value = id
+  if (import.meta.client) localStorage.setItem(LAST_TEAM_KEY, id)
   showColors.value = false
   chat.reset()
   await Promise.all([chat.fetchMessages(id), chat.fetchColor(id), chat.fetchMembers(id)])
@@ -79,8 +83,25 @@ async function openTeam(id: string) {
 
 function backToList() {
   activeId.value = null
+  if (import.meta.client) localStorage.removeItem(LAST_TEAM_KEY)
   chat.unsubscribe()
 }
+
+// Reopen the last conversation once the team list is available (handles both a
+// fresh load and returning to the page). Runs once; a valid stored id only.
+const restored = ref(false)
+watch(
+  () => store.workspaces,
+  (teams) => {
+    if (restored.value || activeId.value || !teams.length || !import.meta.client) return
+    const last = localStorage.getItem(LAST_TEAM_KEY)
+    if (last && teams.some((w) => w.id === last)) {
+      restored.value = true
+      openTeam(last)
+    }
+  },
+  { immediate: true }
+)
 
 async function send() {
   if (!draft.value.trim() || !activeId.value) return

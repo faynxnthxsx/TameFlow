@@ -262,6 +262,48 @@ export type Database = {
           }
         ]
       }
+      invite_links: {
+        Row: {
+          id: string
+          workspace_id: string
+          token: string
+          role: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          token?: string
+          role?: string
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          token?: string
+          role?: string
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'invite_links_workspace_id_fkey'
+            columns: ['workspace_id']
+            isOneToOne: false
+            referencedRelation: 'workspaces'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'invite_links_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'user_profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       task_checklist_items: {
         Row: {
           id: string
@@ -387,6 +429,19 @@ export type Database = {
       can_edit_task: {
         Args: { t_id: string }
         Returns: boolean
+      }
+      invite_link_info: {
+        Args: { link_token: string }
+        Returns: {
+          workspace_id: string
+          workspace_name: string
+          role: string
+          already_member: boolean
+        }[]
+      }
+      redeem_invite_link: {
+        Args: { link_token: string }
+        Returns: string
       }
     }
     Enums: Record<string, never>

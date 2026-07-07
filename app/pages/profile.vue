@@ -144,7 +144,7 @@ function formatDate(iso: string) {
           />
           <div
             v-else
-            class="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-brand-accent text-2xl font-bold text-white"
+            class="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-2xl font-bold text-white"
           >
             {{ initial }}
           </div>

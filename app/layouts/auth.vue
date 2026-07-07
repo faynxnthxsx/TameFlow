@@ -1,5 +1,6 @@
 <template>
   <div class="relative flex min-h-screen flex-col bg-bg">
+    <NuxtLoadingIndicator color="var(--tf-color-primary)" :height="3" />
     <!-- soft brand wash in the background -->
     <div
       class="pointer-events-none absolute inset-0 opacity-60"

@@ -8,6 +8,17 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
+const resetSent = ref(false)
+const sendingReset = ref(false)
+
+// After signing in, return to a page stashed by an invite link (/join/<token>)
+// if there is one, otherwise land on the dashboard.
+function postLoginTarget() {
+  if (typeof window === 'undefined') return '/'
+  const dest = localStorage.getItem('tf_post_login')
+  localStorage.removeItem('tf_post_login')
+  return dest || '/'
+}
 
 async function submit() {
   errorMsg.value = ''
@@ -27,7 +38,29 @@ async function submit() {
       : t('error.generic')
     return
   }
-  await navigateTo('/')
+  await navigateTo(postLoginTarget())
+}
+
+async function forgotPassword() {
+  errorMsg.value = ''
+  resetSent.value = false
+  if (!email.value) {
+    errorMsg.value = t('auth.login.enterEmailFirst')
+    return
+  }
+  sendingReset.value = true
+  // Redeem link lands on /reset-password with a recovery session, where the
+  // user picks a new password.
+  const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
+    redirectTo: `${window.location.origin}/reset-password`
+  })
+  sendingReset.value = false
+  // Don't reveal whether the email exists — show the same confirmation either way.
+  if (error && error.message.toLowerCase().includes('rate')) {
+    errorMsg.value = t('error.generic')
+    return
+  }
+  resetSent.value = true
 }
 
 async function signInWithProvider(provider: 'google' | 'github') {
@@ -93,7 +126,17 @@ async function signInWithProvider(provider: 'google' | 'github') {
         />
       </div>
       <div>
-        <label for="password" class="mb-1 block text-sm font-medium text-text">{{ t('auth.login.password') }}</label>
+        <div class="mb-1 flex items-center justify-between">
+          <label for="password" class="block text-sm font-medium text-text">{{ t('auth.login.password') }}</label>
+          <button
+            type="button"
+            :disabled="sendingReset"
+            class="text-xs font-medium text-primary transition hover:underline disabled:opacity-60"
+            @click="forgotPassword"
+          >
+            {{ sendingReset ? t('common.loading') : t('auth.login.forgotPassword') }}
+          </button>
+        </div>
         <input
           id="password"
           v-model="password"
@@ -104,6 +147,9 @@ async function signInWithProvider(provider: 'google' | 'github') {
         />
       </div>
 
+      <p v-if="resetSent" class="flex items-start gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
+        <AppIcon name="check" class="mt-0.5 h-4 w-4 shrink-0" />{{ t('auth.login.resetSent') }}
+      </p>
       <p v-if="errorMsg" class="text-sm text-danger">{{ errorMsg }}</p>
 
       <button

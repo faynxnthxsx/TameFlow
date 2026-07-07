@@ -14,7 +14,7 @@ const { data, pending, error, refresh } = await useAsyncData(
       wsRes,
       membersRes,
       projectsRes,
-      invitesRes,
+      linksRes,
       roleRes,
       authRes,
       taskCountRes,
@@ -35,12 +35,12 @@ const { data, pending, error, refresh } = await useAsyncData(
         .select('id, name, description, created_at')
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: true }),
+      // Shareable invite links (managers only; RLS returns [] for others).
       supabase
-        .from('workspace_invitations')
-        .select('id, email, role, created_at')
+        .from('invite_links')
+        .select('id, token, role, created_at')
         .eq('workspace_id', workspaceId)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true }),
+        .order('created_at', { ascending: false }),
       // My role from the JWT (auth.uid()) — reliable even when the reactive
       // useSupabaseUser() ref hasn't populated yet.
       supabase.rpc('workspace_role', { ws_id: workspaceId }),
@@ -62,7 +62,7 @@ const { data, pending, error, refresh } = await useAsyncData(
     if (membersRes.error) throw membersRes.error
     if (projectsRes.error) throw projectsRes.error
     if (roleRes.error) throw roleRes.error
-    // Invitations are visible only to managers; non-managers get an empty list
+    // Invite links are visible only to managers; non-managers get an empty list
     // from RLS rather than an error, so a failure here shouldn't break the page.
     const taskCount = taskCountRes.count ?? 0
     const doneCount = doneCountRes.count ?? 0
@@ -70,7 +70,7 @@ const { data, pending, error, refresh } = await useAsyncData(
       workspace: wsRes.data,
       members: membersRes.data,
       projects: projectsRes.data,
-      invitations: invitesRes.data ?? [],
+      links: linksRes.data ?? [],
       myRole: (roleRes.data ?? null) as WorkspaceRole | null,
       myUserId: authRes.data.user?.id ?? null,
       taskCount,
@@ -131,105 +131,84 @@ async function createProject() {
   await navigateTo(`/projects/${created.id}`)
 }
 
-// --- invitations ---
+// --- invite links (Discord-style shareable links) ---
 const INVITABLE_ROLES = ['admin', 'member', 'viewer'] as const
 const showInviteForm = ref(false)
-const inviteEmail = ref('')
-const inviteRole = ref<(typeof INVITABLE_ROLES)[number]>('member')
-const inviteEmailInput = ref<HTMLInputElement | null>(null)
-const inviting = ref(false)
-const inviteError = ref('')
+const linkRole = ref<(typeof INVITABLE_ROLES)[number]>('member')
+const creatingLink = ref(false)
+const linkError = ref('')
+// Token whose "copy" button was just pressed (per-link feedback).
+const copiedToken = ref<string | null>(null)
 
-// After an invite is created we swap the modal to a "share" step so the inviter
-// can send the link out (social / copy) instead of relying on email delivery.
-const inviteShare = ref<{ email: string; url: string; message: string } | null>(null)
-const copied = ref(false)
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// useRequestURL() gives the correct origin on both server and client, so the
+// rendered link URLs stay hydration-stable.
+const siteOrigin = useRequestURL().origin
+function linkUrl(token: string) {
+  return `${siteOrigin}/join/${token}`
+}
+function linkMessage(token: string) {
+  return t('invite.linkShareMessage', {
+    workspace: data.value?.workspace.name ?? '',
+    url: linkUrl(token)
+  })
+}
 
 function openInviteForm() {
   showInviteForm.value = true
-  inviteError.value = ''
-  inviteShare.value = null
-  nextTick(() => inviteEmailInput.value?.focus())
+  linkError.value = ''
+  linkRole.value = 'member'
 }
 
 function cancelInviteForm() {
   showInviteForm.value = false
-  inviteEmail.value = ''
-  inviteRole.value = 'member'
-  inviteError.value = ''
-  inviteShare.value = null
-  copied.value = false
+  linkError.value = ''
+  copiedToken.value = null
 }
 
-// Social share targets (opened in a new tab). IG has no web link-share, so it's
-// covered by "copy message" which the user can paste anywhere.
-const shareLinks = computed(() => {
-  const s = inviteShare.value
-  if (!s) return []
-  const u = encodeURIComponent(s.url)
-  const txt = encodeURIComponent(s.message)
+async function createLink() {
+  creatingLink.value = true
+  linkError.value = ''
+  const { error: insertError } = await supabase.from('invite_links').insert({
+    workspace_id: workspaceId,
+    role: linkRole.value,
+    created_by: data.value?.myUserId
+  })
+  creatingLink.value = false
+  if (insertError) {
+    linkError.value = t('error.generic')
+    return
+  }
+  await refresh()
+}
+
+async function copyLink(token: string) {
+  try {
+    await navigator.clipboard.writeText(linkUrl(token))
+    copiedToken.value = token
+    setTimeout(() => {
+      if (copiedToken.value === token) copiedToken.value = null
+    }, 2000)
+  } catch {
+    // Clipboard may be blocked; the URL is still selectable in the UI.
+  }
+}
+
+async function deleteLink(id: string) {
+  const { error: deleteError } = await supabase.from('invite_links').delete().eq('id', id)
+  if (!deleteError) await refresh()
+}
+
+// Social share targets for a given link (opened in a new tab). IG has no web
+// link-share, so it's covered by "copy link" which pastes anywhere.
+function shareTargets(token: string) {
+  const u = encodeURIComponent(linkUrl(token))
+  const txt = encodeURIComponent(linkMessage(token))
   return [
     { key: 'Facebook', color: '#1877F2', href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
     { key: 'X', color: '#000000', href: `https://twitter.com/intent/tweet?text=${txt}` },
     { key: 'LINE', color: '#06C755', href: `https://social-plugins.line.me/lineit/share?url=${u}` },
     { key: 'WhatsApp', color: '#25D366', href: `https://wa.me/?text=${txt}` }
   ]
-})
-
-async function copyShare() {
-  if (!inviteShare.value) return
-  try {
-    await navigator.clipboard.writeText(inviteShare.value.message)
-    copied.value = true
-    setTimeout(() => (copied.value = false), 2000)
-  } catch {
-    // Clipboard may be blocked; the message is still selectable in the field.
-  }
-}
-
-async function sendInvite() {
-  const email = inviteEmail.value.trim().toLowerCase()
-  if (!EMAIL_RE.test(email)) {
-    inviteError.value = t('validation.email')
-    return
-  }
-  inviting.value = true
-  inviteError.value = ''
-  const { error: insertError } = await supabase.from('workspace_invitations').insert({
-    workspace_id: workspaceId,
-    email,
-    role: inviteRole.value,
-    invited_by: data.value?.myUserId
-  })
-  inviting.value = false
-  if (insertError) {
-    // 23505 = unique violation → a pending invite for this email already exists.
-    inviteError.value =
-      insertError.code === '23505' ? t('invite.duplicate') : t('error.generic')
-    return
-  }
-  // Build the shareable message and switch the modal to the share step.
-  const url = `${window.location.origin}/invitations`
-  inviteShare.value = {
-    email,
-    url,
-    message: t('invite.shareMessage', {
-      workspace: data.value?.workspace.name ?? '',
-      email,
-      url
-    })
-  }
-  await refresh()
-}
-
-async function cancelInvite(id: string) {
-  const { error: deleteError } = await supabase
-    .from('workspace_invitations')
-    .delete()
-    .eq('id', id)
-  if (!deleteError) await refresh()
 }
 
 function formatDate(iso: string) {
@@ -431,12 +410,12 @@ function initials(name: string) {
         </li>
       </ul>
 
-      <!-- Pending invitations (managers only) -->
+      <!-- Invite links (managers only) -->
       <template v-if="capabilities?.manageMembers">
         <div class="mt-8 flex items-center justify-between">
           <h2 class="text-lg font-semibold text-text">
-            {{ t('invite.sectionTitle') }}
-            <span class="ml-1 text-text-muted">({{ data.invitations.length }})</span>
+            {{ t('invite.linksTitle') }}
+            <span class="ml-1 text-text-muted">({{ data.links.length }})</span>
           </h2>
           <button
             type="button"
@@ -449,47 +428,78 @@ function initials(name: string) {
         </div>
 
         <p
-          v-if="data.invitations.length === 0"
+          v-if="data.links.length === 0"
           class="mt-4 flex flex-col items-center gap-1 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-text-muted"
         >
-          <AppIcon name="mail" class="mb-1 h-6 w-6 text-text-muted/60" />
-          {{ t('invite.empty') }}
+          <AppIcon name="link" class="mb-1 h-6 w-6 text-text-muted/60" />
+          {{ t('invite.linksEmpty') }}
         </p>
-        <ul
-          v-else
-          class="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface shadow-card"
-        >
+        <ul v-else class="mt-4 flex flex-col gap-3">
           <li
-            v-for="invite in data.invitations"
-            :key="invite.id"
-            class="flex items-center justify-between gap-3 p-4"
+            v-for="link in data.links"
+            :key="link.id"
+            class="rounded-2xl border border-border bg-surface p-4 shadow-card"
           >
-            <div class="flex min-w-0 items-center gap-3">
-              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                <AppIcon name="mail" class="h-5 w-5" />
-              </span>
-              <div class="min-w-0">
-                <p class="truncate font-medium text-text">{{ invite.email }}</p>
-                <p class="text-sm text-text-muted">
-                  {{ t('invite.pendingSince') }} {{ formatDate(invite.created_at) }}
-                </p>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <AppIcon name="link" class="h-5 w-5" />
+                </span>
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-text">{{ linkUrl(link.token) }}</p>
+                  <p class="text-sm text-text-muted">
+                    {{ t('invite.invitedAs') }}
+                    <span
+                      class="ml-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                      :class="ROLE_BADGE_CLASSES[link.role]"
+                    >
+                      {{ t(`role.${link.role}`) }}
+                    </span>
+                    &middot; {{ formatDate(link.created_at) }}
+                  </p>
+                </div>
+              </div>
+              <div class="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition hover:bg-surface-alt"
+                  :class="copiedToken === link.token ? 'text-success' : 'text-text'"
+                  @click="copyLink(link.token)"
+                >
+                  <AppIcon :name="copiedToken === link.token ? 'check' : 'copy'" class="h-4 w-4" />
+                  {{ copiedToken === link.token ? t('invite.copied') : t('invite.copyLink') }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-text-muted transition hover:bg-danger/10 hover:text-danger"
+                  :title="t('invite.revoke')"
+                  @click="deleteLink(link.id)"
+                >
+                  <AppIcon name="trash" class="h-4 w-4" />
+                </button>
               </div>
             </div>
-            <div class="flex shrink-0 items-center gap-3">
-              <span
-                class="rounded-full px-3 py-1 text-xs font-medium"
-                :class="ROLE_BADGE_CLASSES[invite.role]"
-              >
-                {{ t(`role.${invite.role}`) }}
+            <!-- Social share -->
+            <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+              <span class="mr-1 text-xs font-medium uppercase tracking-wide text-text-muted">
+                {{ t('invite.shareVia') }}
               </span>
-              <button
-                type="button"
-                class="rounded-lg p-1.5 text-text-muted transition hover:bg-danger/10 hover:text-danger"
-                :title="t('invite.cancel')"
-                @click="cancelInvite(invite.id)"
+              <a
+                v-for="s in shareTargets(link.token)"
+                :key="s.key"
+                :href="s.href"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-text transition hover:bg-surface-alt"
               >
-                <AppIcon name="trash" class="h-4 w-4" />
-              </button>
+                <span
+                  class="grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold text-white"
+                  :style="`background:${s.color}`"
+                >
+                  {{ s.key.charAt(0) }}
+                </span>
+                {{ s.key }}
+              </a>
             </div>
           </li>
         </ul>
@@ -503,7 +513,7 @@ function initials(name: string) {
         <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-modal">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-3">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-brand-accent text-primary-fg">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-fg">
                 <AppIcon name="projects" class="h-5 w-5" />
               </span>
               <div>
@@ -567,143 +577,100 @@ function initials(name: string) {
       </div>
     </Teleport>
 
-    <!-- Invite modal -->
+    <!-- Invite-link modal -->
     <Teleport to="body">
       <div v-if="showInviteForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="cancelInviteForm" />
         <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-modal">
-          <!-- Step 1: enter email + role -->
-          <template v-if="!inviteShare">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-center gap-3">
-                <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-info text-primary-fg">
-                  <AppIcon name="user-plus" class="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 class="text-lg font-bold text-text">{{ t('invite.sendTitle') }}</h2>
-                  <p class="text-sm text-text-muted">{{ t('invite.sendSubtitle') }}</p>
-                </div>
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-info text-primary-fg">
+                <AppIcon name="link" class="h-5 w-5" />
+              </span>
+              <div>
+                <h2 class="text-lg font-bold text-text">{{ t('invite.linkModalTitle') }}</h2>
+                <p class="text-sm text-text-muted">{{ t('invite.linkModalSubtitle') }}</p>
               </div>
-              <button
-                type="button"
-                class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
-                @click="cancelInviteForm"
-              >
-                <AppIcon name="x" class="h-5 w-5" />
-              </button>
             </div>
+            <button
+              type="button"
+              class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
+              @click="cancelInviteForm"
+            >
+              <AppIcon name="x" class="h-5 w-5" />
+            </button>
+          </div>
 
-            <form class="mt-5 flex flex-col gap-4" @submit.prevent="sendInvite">
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-text">{{ t('invite.emailPlaceholder') }}</label>
-                <input
-                  ref="inviteEmailInput"
-                  v-model="inviteEmail"
-                  type="email"
-                  :placeholder="t('invite.emailPlaceholder')"
-                  class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  @keyup.esc="cancelInviteForm"
-                />
-              </div>
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-text">{{ t('invite.roleLabel') }}</label>
-                <select
-                  v-model="inviteRole"
-                  class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          <!-- Create a new link -->
+          <form class="mt-5 flex items-end gap-3" @submit.prevent="createLink">
+            <div class="flex-1">
+              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('invite.roleLabel') }}</label>
+              <select
+                v-model="linkRole"
+                class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option v-for="r in INVITABLE_ROLES" :key="r" :value="r">
+                  {{ t(`role.${r}`) }}
+                </option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              :disabled="creatingLink"
+              class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+            >
+              <AppIcon name="plus" class="h-4 w-4" />
+              {{ creatingLink ? t('common.loading') : t('invite.createLink') }}
+            </button>
+          </form>
+          <p v-if="linkError" class="mt-2 text-sm text-danger">{{ linkError }}</p>
+
+          <!-- Existing links: copy / revoke -->
+          <div v-if="data && data.links.length" class="mt-5 border-t border-border pt-4">
+            <p class="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
+              {{ t('invite.activeLinks') }}
+            </p>
+            <ul class="flex max-h-64 flex-col gap-2 overflow-y-auto">
+              <li
+                v-for="link in data.links"
+                :key="link.id"
+                class="flex items-center gap-2 rounded-xl border border-border bg-surface-alt/40 p-2.5"
+              >
+                <span
+                  class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                  :class="ROLE_BADGE_CLASSES[link.role]"
                 >
-                  <option v-for="r in INVITABLE_ROLES" :key="r" :value="r">
-                    {{ t(`role.${r}`) }}
-                  </option>
-                </select>
-              </div>
-              <p v-if="inviteError" class="text-sm text-danger">{{ inviteError }}</p>
-
-              <div class="flex justify-end gap-3">
+                  {{ t(`role.${link.role}`) }}
+                </span>
+                <span class="min-w-0 flex-1 truncate text-xs text-text-muted">{{ linkUrl(link.token) }}</span>
                 <button
                   type="button"
-                  class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
-                  @click="cancelInviteForm"
+                  class="shrink-0 rounded-lg p-1.5 transition hover:bg-surface"
+                  :class="copiedToken === link.token ? 'text-success' : 'text-text-muted hover:text-text'"
+                  :title="t('invite.copyLink')"
+                  @click="copyLink(link.token)"
                 >
-                  {{ t('common.cancel') }}
+                  <AppIcon :name="copiedToken === link.token ? 'check' : 'copy'" class="h-4 w-4" />
                 </button>
                 <button
-                  type="submit"
-                  :disabled="inviting || !inviteEmail.trim()"
-                  class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+                  type="button"
+                  class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-danger/10 hover:text-danger"
+                  :title="t('invite.revoke')"
+                  @click="deleteLink(link.id)"
                 >
-                  <AppIcon name="user-plus" class="h-4 w-4" />
-                  {{ inviting ? t('common.loading') : t('invite.send') }}
+                  <AppIcon name="trash" class="h-4 w-4" />
                 </button>
-              </div>
-            </form>
-          </template>
+              </li>
+            </ul>
+          </div>
 
-          <!-- Step 2: share the invite link -->
-          <template v-else>
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-center gap-3">
-                <span class="grid h-11 w-11 place-items-center rounded-xl bg-success/10 text-success">
-                  <AppIcon name="check" class="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 class="text-lg font-bold text-text">{{ t('invite.shareTitle') }}</h2>
-                  <p class="text-sm text-text-muted">{{ t('invite.shareSubtitle', { email: inviteShare.email }) }}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
-                @click="cancelInviteForm"
-              >
-                <AppIcon name="x" class="h-5 w-5" />
-              </button>
-            </div>
-
-            <div class="mt-5">
-              <p class="rounded-xl border border-border bg-surface-alt p-3 text-sm leading-relaxed text-text-muted">
-                {{ inviteShare.message }}
-              </p>
-              <button
-                type="button"
-                class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition hover:bg-surface-alt"
-                :class="copied ? 'text-success' : 'text-text'"
-                @click="copyShare"
-              >
-                <AppIcon :name="copied ? 'check' : 'send'" class="h-4 w-4" />
-                {{ copied ? t('invite.copied') : t('invite.copyLink') }}
-              </button>
-
-              <p class="mb-2 mt-5 text-xs font-medium uppercase tracking-wide text-text-muted">
-                {{ t('invite.shareVia') }}
-              </p>
-              <div class="grid grid-cols-4 gap-2">
-                <a
-                  v-for="s in shareLinks"
-                  :key="s.key"
-                  :href="s.href"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex flex-col items-center gap-1.5 rounded-xl border border-border p-2.5 text-xs font-medium text-text transition hover:bg-surface-alt"
-                >
-                  <span
-                    class="grid h-8 w-8 place-items-center rounded-full text-sm font-bold text-white"
-                    :style="`background:${s.color}`"
-                  >
-                    {{ s.key.charAt(0) }}
-                  </span>
-                  {{ s.key }}
-                </a>
-              </div>
-
-              <button
-                type="button"
-                class="mt-6 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover"
-                @click="cancelInviteForm"
-              >
-                {{ t('invite.done') }}
-              </button>
-            </div>
-          </template>
+          <button
+            type="button"
+            class="mt-6 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover"
+            @click="cancelInviteForm"
+          >
+            {{ t('invite.done') }}
+          </button>
         </div>
       </div>
     </Teleport>

@@ -79,9 +79,21 @@ export const useWorkspacesStore = defineStore('workspaces', () => {
   const loaded = ref(false)
 
   async function fetchWorkspaces() {
+    // Only MY membership rows — one per workspace. Without the user_id filter,
+    // RLS returns every member of every workspace I belong to, so a team with N
+    // members would appear N times in the list (and carry a random member's
+    // role). getUser() is the reliable session source (not the reactive ref).
+    const { data: auth } = await supabase.auth.getUser()
+    const uid = auth.user?.id
+    if (!uid) {
+      workspaces.value = []
+      loaded.value = true
+      return
+    }
     const { data, error } = await supabase
       .from('workspace_members')
       .select('role, workspace:workspaces (id, name, created_at, updated_at)')
+      .eq('user_id', uid)
       .order('created_at', { ascending: true })
     if (error) throw error
 
@@ -183,9 +195,15 @@ export const useWorkspacesStore = defineStore('workspaces', () => {
       activity: []
     }
 
+    // My memberships only — one row per team (see fetchWorkspaces); otherwise
+    // totals.teams would count every member of every team, not the teams.
+    const { data: auth } = await supabase.auth.getUser()
+    const uid = auth.user?.id
+    if (!uid) return empty
     const { data: memberships, error } = await supabase
       .from('workspace_members')
       .select('role, workspace:workspaces (id, name, created_at)')
+      .eq('user_id', uid)
       .order('created_at', { ascending: true })
     if (error) throw error
 
