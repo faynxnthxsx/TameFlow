@@ -1,16 +1,12 @@
 <script setup lang="ts">
-// Framework-free calendar popover replacing the un-themeable native
-// <input type="date">. Emits an ISO 'YYYY-MM-DD' string (or '' when cleared),
-// built from local date parts so it never drifts across timezones.
-//
-// The picked day is held in a local `draft` and only committed when the user
-// presses Confirm — so they can browse months and change days freely first.
-// The panel flips above the trigger when there isn't room below (keeps the
-// last week from being clipped by the viewport, e.g. on laptops).
+
+// เรียกใช้งานคำสั่งพิเศษของ Vue (Compiler Macro) เพื่อรับค่าและตั้งค่าเริ่มต้น
 const props = withDefaults(
   defineProps<{ modelValue: string; placeholder?: string }>(),
   { placeholder: '' }
 )
+
+//// ประกาศ emit สำหรับ v-model โดยค่าที่ส่งไปยัง parent component ต้องเป็น string เท่านั้น
 const emit = defineEmits<{ 'update:modelValue': [string] }>()
 
 const { t, locale } = useI18n()
@@ -18,7 +14,7 @@ const { t, locale } = useI18n()
 const open = ref(false)
 const dropUp = ref(false)
 const root = ref<HTMLElement | null>(null)
-onClickOutside(root, () => (open.value = false)) // outside click discards the draft
+onClickOutside(root, () => (open.value = false)) 
 
 function toIso(d: Date) {
   const y = d.getFullYear()

@@ -98,7 +98,8 @@
     "label": "Language",
     "en": "English",
     "th": "Thai",
-    "ja": "Japanese"
+    "ja": "Japanese",
+    "es": "Spanish"
   },
   "auth": {
     "login": {
@@ -175,7 +176,10 @@
     "uploading": "Uploading...",
     "photoInvalid": "Please choose an image file.",
     "photoTooLarge": "Image must be under 2 MB.",
-    "photoHint": "PNG or JPG, up to 2 MB."
+    "photoHint": "PNG or JPG, up to 2 MB.",
+    "lineUserId": "LINE User ID",
+    "lineUserIdPlaceholder": "U123456789...",
+    "lineUserIdHint": "Add our bot and send any message to get your User ID."
   },
   "workspace": {
     "listTitle": "Your workspaces",
@@ -227,6 +231,11 @@
     "dueDate": "Due date",
     "assignee": "Assignee",
     "unassigned": "Unassigned",
+    "filterAll": "All",
+    "filterMyTasks": "My tasks",
+    "filterUnassigned": "Unassigned",
+    "filterAllPriorities": "All priorities",
+    "searchPlaceholder": "Search tasks or descriptions...",
     "emptyColumn": "No tasks",
     "deleteConfirm": "Delete task \"{title}\"?",
     "description": "Description",
@@ -277,7 +286,8 @@
     "members": "Members",
     "sharedLinks": "Shared links",
     "noLinks": "No links shared yet.",
-    "createdOn": "Created {date}"
+    "createdOn": "Created {date}",
+    "confirmDelete": "Delete this message?"
   },
   "invite": {
     "sectionTitle": "Pending invitations",

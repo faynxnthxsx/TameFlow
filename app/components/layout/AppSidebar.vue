@@ -3,11 +3,11 @@ const { t } = useI18n()
 const route = useRoute()
 const { profile, loadProfile } = useProfileState()
 
-// Shared with the navbar hamburger; off-canvas drawer on mobile.
+// ตั้งค่าตัวเเปรคงที่เเละกำหนดค่าเริ่มต้นของ statea ห่อboolean ด้วย ref เพื่อให้เปลี่ยนค่าได้เมื่อ url เปลี่ยน
 const open = useState('tf-sidebar-open', () => false)
 watch(() => route.fullPath, () => (open.value = false))
 
-// Items without `to` are placeholders for upcoming phases (shown dimmed).
+// กำหนดปุ่มเเละไอคอนเมนูนำทางใน sidebar เเละ Const Assertion ล็อกทั้งก้อนให้เป็นแบบ(Read-Only)
 const navItems = [
   { key: 'nav.dashboard', icon: 'dashboard', to: '/' },
   { key: 'nav.overview', icon: 'building', to: '/overview' },
@@ -20,14 +20,14 @@ const navItems = [
   { key: 'nav.members', icon: 'members', to: '/members' },
   { key: 'nav.reports', icon: 'reports', to: '/reports' },
   { key: 'nav.settings', icon: 'settings', to: '/settings' }
-] as const
+] as const 
 
+//เพื่อจัดการ State สีไฮไลต์  เเละตรวจสอบเส้นทางด้วย if-else ย่อว่าตรงกับที่กำหนดไว้ไหม
 function isActive(to: string) {
   return to === '/' ? route.path === '/' : route.path.startsWith(to)
 }
 
-// Footer profile card comes from the shared profile state, so it updates the
-// instant the profile page saves a new name/avatar.
+// รันเเค่ครั้งเเรกที่เปิดเว็บเพื่อโหลดข้อมูลโปรไฟล์ ถ้าไม่มีอีเมล
 onMounted(() => {
   if (!profile.value.email) loadProfile()
 })

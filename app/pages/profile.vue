@@ -12,7 +12,7 @@ const { data, pending } = await useAsyncData(
     if (!uid) return { uid: '', email, display_name: '', avatar_url: '', created_at: '' }
     const { data: row } = await supabase
       .from('user_profiles')
-      .select('display_name, avatar_url, created_at')
+      .select('display_name, avatar_url, created_at, line_user_id')
       .eq('id', uid)
       .single()
     return {
@@ -20,7 +20,8 @@ const { data, pending } = await useAsyncData(
       email,
       display_name: row?.display_name ?? '',
       avatar_url: row?.avatar_url ?? '',
-      created_at: row?.created_at ?? ''
+      created_at: row?.created_at ?? '',
+      line_user_id: row?.line_user_id ?? ''
     }
   },
   { lazy: true }
@@ -28,6 +29,7 @@ const { data, pending } = await useAsyncData(
 
 const displayName = ref('')
 const avatarUrl = ref('')
+const lineUserId = ref('')
 const saving = ref(false)
 const errorMsg = ref('')
 const savedMsg = ref('')
@@ -85,6 +87,7 @@ watch(
     if (!d) return
     displayName.value = d.display_name
     avatarUrl.value = d.avatar_url
+    lineUserId.value = d.line_user_id
   },
   { immediate: true }
 )
@@ -100,7 +103,8 @@ async function save() {
     .from('user_profiles')
     .update({
       display_name: displayName.value.trim() || null,
-      avatar_url: avatarUrl.value.trim() || null
+      avatar_url: avatarUrl.value.trim() || null,
+      line_user_id: lineUserId.value.trim() || null
     })
     .eq('id', data.value.uid)
   saving.value = false
@@ -169,6 +173,21 @@ function formatDate(iso: string) {
             :placeholder="t('profile.displayNamePlaceholder')"
             class="mt-1.5 w-full rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-text">{{ t('profile.lineUserId') }}</span>
+          <input
+            v-model="lineUserId"
+            type="text"
+            maxlength="50"
+            :placeholder="t('profile.lineUserIdPlaceholder')"
+            class="mt-1.5 w-full rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <p class="mt-1.5 flex items-center gap-1.5 text-xs text-text-muted">
+            <AppIcon name="info" class="h-3.5 w-3.5 opacity-70" />
+            {{ t('profile.lineUserIdHint') }}
+          </p>
         </label>
 
         <label class="block">

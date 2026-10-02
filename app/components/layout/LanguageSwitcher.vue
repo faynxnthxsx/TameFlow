@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//เก็บเก็บรายชื่อภาษาที่ระบบของเว็บนี้รองรับ ด้วย type localeId
 import { SUPPORTED_LOCALES, type LocaleId } from '~/composables/useLocalePreference'
 
 const { locale, setPreferredLocale } = useLocalePreference()
@@ -8,20 +9,23 @@ const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 onClickOutside(root, () => (open.value = false))
 
+//เลือกภาษาที่ต้องการจากนั้นปิดกล่องดรอปดาว  เเละกำหนดว่ามีภาษาอะไรที่รองรับบ้าง
 function choose(code: LocaleId) {
   setPreferredLocale(code)
   open.value = false
 }
 </script>
 
+//ปุ่มหลัก เพื่อกดเปิดหรือปิดกล่องดรอปดาวน์
 <template>
   <div ref="root" class="relative">
     <button
       type="button"
-      class="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm font-medium text-text transition hover:bg-surface-alt"
+      class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-text-muted transition hover:bg-surface-alt hover:text-text"
       :aria-label="t('language.label')"
       @click="open = !open"
     >
+      <!-- โชว์ธงชาติเเละชื่อย่อภาษาปัจจุด้วยพิมพ์ใหญ่เเละมีลูกศรลงเพื่อบอกว่ามีตัวเลือกเเพิ่มเติมให้เลือก -->
       <AppFlag :code="locale" class="h-3.5 w-5" />
       <span class="uppercase">{{ locale }}</span>
       <AppIcon name="chevron-down" class="h-3.5 w-3.5 text-text-muted" />

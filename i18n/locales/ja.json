@@ -98,7 +98,8 @@
     "label": "言語",
     "en": "英語",
     "th": "タイ語",
-    "ja": "日本語"
+    "ja": "日本語",
+    "es": "スペイン語"
   },
   "auth": {
     "login": {
@@ -175,7 +176,10 @@
     "uploading": "アップロード中...",
     "photoInvalid": "画像ファイルを選択してください",
     "photoTooLarge": "画像は2MB未満にしてください",
-    "photoHint": "PNG/JPG、2MBまで"
+    "photoHint": "PNG/JPG、2MBまで",
+    "lineUserId": "LINE ユーザーID",
+    "lineUserIdPlaceholder": "U123456789...",
+    "lineUserIdHint": "ボットを追加してメッセージを送信し、ユーザーIDを取得してください。"
   },
   "workspace": {
     "listTitle": "ワークスペース",
@@ -227,6 +231,11 @@
     "dueDate": "期限",
     "assignee": "担当者",
     "unassigned": "未割り当て",
+    "filterAll": "すべて",
+    "filterMyTasks": "自分のタスク",
+    "filterUnassigned": "担当者なし",
+    "filterAllPriorities": "すべての優先度",
+    "searchPlaceholder": "タスク名や説明を検索...",
     "emptyColumn": "タスクなし",
     "deleteConfirm": "タスク「{title}」を削除しますか?",
     "description": "説明",
@@ -277,7 +286,8 @@
     "members": "メンバー",
     "sharedLinks": "共有リンク",
     "noLinks": "共有リンクはまだありません。",
-    "createdOn": "作成日 {date}"
+    "createdOn": "作成日 {date}",
+    "confirmDelete": "このメッセージを削除しますか？"
   },
   "invite": {
     "sectionTitle": "保留中の招待",

@@ -8,7 +8,8 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase',
     '@pinia/nuxt',
     '@vueuse/nuxt',
-    '@nuxtjs/i18n'
+    '@nuxtjs/i18n',
+    'nuxt-security'
   ],
 
   tailwindcss: {
@@ -25,6 +26,20 @@ export default defineNuxtConfig({
     }
   },
 
+  security: {
+    rateLimiter: {
+      tokensPerInterval: 100,
+      interval: 60000,
+      throwError: true
+    },
+    
+    headers: {
+      contentSecurityPolicy: {
+        'img-src': ["'self'", 'data:', 'https://ieorzmqmqjqrbeqlzjqd.supabase.co', 'https://*.googleusercontent.com']
+      }
+    }
+  },
+
   i18n: {
     locales: [
       { code: 'en', name: 'English', file: 'en.json' },
@@ -33,7 +48,6 @@ export default defineNuxtConfig({
     ],
     langDir: '../i18n/locales',
     defaultLocale: 'en',
-    strategy: 'no_prefix',
-    lazy: true
+    strategy: 'no_prefix'
   }
 })

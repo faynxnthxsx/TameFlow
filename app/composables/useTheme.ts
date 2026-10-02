@@ -57,15 +57,18 @@ export function useTheme() {
 
   function setTheme(id: ThemeId) {
     applyTheme(id)
-    if (user.value) {
-      void supabase
-        .from('user_profiles')
-        .update({ preferred_theme: id })
-        .eq('id', user.value.id)
-        .then(({ error }) => {
-          if (error) console.warn('Failed to sync preferred_theme:', error.message)
-        })
+    const uid = user.value?.id
+    if (!uid) {
+      console.warn('[setTheme] skipped DB sync — no user id')
+      return
     }
+    void supabase
+      .from('user_profiles')
+      .update({ preferred_theme: id })
+      .eq('id', uid)
+      .then(({ error }) => {
+        if (error) console.warn('Failed to sync preferred_theme:', error.message)
+      })
   }
 
   const isDark = computed(() => theme.value === DARK_THEME)

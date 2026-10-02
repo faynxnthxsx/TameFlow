@@ -53,13 +53,15 @@ export const useChatStore = defineStore('chat', () => {
     user_id: string
     body: string
     created_at: string
+    updated_at?: string
     author: { display_name: string | null; avatar_url: string | null } | null
-  }): ChatMessage {
+  }): ChatMessage & { updatedAt?: string } {
     return {
       id: row.id,
       userId: row.user_id,
       body: row.body,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
       authorName: row.author?.display_name || 'User',
       authorAvatar: row.author?.avatar_url ?? null
     }
@@ -93,6 +95,30 @@ export const useChatStore = defineStore('chat', () => {
     if (error) throw error
     // Refetch so our own message shows immediately even if realtime is slow.
     await fetchMessages(workspaceId)
+  }
+
+  async function updateMessage(messageId: string, newBody: string) {
+    const trimmed = newBody.trim()
+    if (!trimmed) return
+    
+    // Optimistic update
+    const msg = messages.value.find(m => m.id === messageId)
+    if (msg) msg.body = trimmed
+
+    const { error } = await supabase
+      .from('chat_messages')
+      .update({ body: trimmed })
+      .eq('id', messageId)
+    if (error) throw error
+  }
+
+  async function deleteMessage(messageId: string) {
+    messages.value = messages.value.filter(m => m.id !== messageId)
+    const { error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('id', messageId)
+    if (error) throw error
   }
 
   // Roster for the team-details panel. RLS lets any member read the members
@@ -138,7 +164,7 @@ export const useChatStore = defineStore('chat', () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'chat_messages',
           filter: `workspace_id=eq.${workspaceId}`
@@ -171,6 +197,8 @@ export const useChatStore = defineStore('chat', () => {
     fetchMessages,
     fetchMembers,
     sendMessage,
+    updateMessage,
+    deleteMessage,
     fetchColor,
     setColor,
     subscribe,

@@ -28,6 +28,10 @@ The project is built in phases, roughly one migration per phase: Phase 0 theming
 
 Components must only use these tokens (via the Tailwind mappings or `var(--tf-*)`) — never hardcoded colors. The app ships **one blue brand theme in two modes**: light (`corporate-blue`) and dark (`dark-mode`), toggled by `LayoutThemeSwitcher` / `useTheme().toggleTheme()`. The theme id is still the persisted value (localStorage `tf_theme` + `user_profiles.preferred_theme`). Adding/changing a mode requires coordinated changes: its CSS file imported in `main.css`, an entry in the `THEMES` registry in `app/composables/useTheme.ts`, and the `preferred_theme` check constraint in the DB (new migration — see `20260704160000_theme_light_dark.sql`).
 
+### SSR is on; preference/profile state deliberately opts out of it
+
+`nuxt.config.ts` never sets `ssr: false`, so the app uses Nuxt's default universal rendering — pages (and the global `auth.global.ts` middleware) run on the server for the first request, then hydrate client-side. Theme/locale/profile state can't follow that path because it depends on `localStorage` and a Supabase session, neither available during the server pass — that's why all three boot plugins below are suffixed `.client.ts` (server-skipped) rather than plain `.ts`.
+
 ### User preferences (theme + locale) share one persistence pattern
 
 Priority: DB `user_profiles` row > localStorage > browser language (locale only) > default. Each has:
@@ -38,11 +42,11 @@ Priority: DB `user_profiles` row > localStorage > browser language (locale only)
 
 The DB tier is applied by a third plugin, `app/plugins/profile-prefs.client.ts`: it `watch`es `useSupabaseUser()` and, once a session exists, fetches `preferred_theme`/`preferred_language` and overwrites the localStorage-derived values (this ordering is what makes "DB > localStorage" hold in practice). Profile identity (display name + avatar) is shared across components via the `useProfileState()` composable, a `useState('tf-profile')` singleton that pages like `profile.vue` mutate with `setProfile()` so the navbar/sidebar update immediately.
 
-i18n: locales `en`/`th`/`ja`, `no_prefix` strategy, lazy-loaded JSON in `i18n/locales/`. Tailwind's `content` globs include `i18n/**/*.json`, so classes used in locale files are picked up.
+i18n: locales `en`/`th`/`ja`/`es`, `no_prefix` strategy, lazy-loaded JSON in `i18n/locales/`. Tailwind's `content` globs include `i18n/**/*.json`, so classes used in locale files are picked up.
 
 ### Supabase
 
-- The module's built-in route protection is disabled (`redirectOptions.exclude: ['/**']` in `nuxt.config.ts`); guarding lives in `app/middleware/auth.global.ts`, which redirects unauthenticated users to `/login` except for `PUBLIC_PATHS` (`/login`, `/register`, `/confirm`) and any `/join/*` invite-link landing page (viewable signed-out so a visitor sees which workspace invited them before logging in). Don't "fix" the exclusion.
+- The module's built-in route protection is disabled (`redirectOptions.exclude: ['/**']` in `nuxt.config.ts`); guarding lives in `app/middleware/auth.global.ts`, which redirects unauthenticated users to `/login` except for `PUBLIC_PATHS` (`/login`, `/register`, `/confirm`, `/reset-password`) and any `/join/*` invite-link landing page (viewable signed-out so a visitor sees which workspace invited them before logging in). Don't "fix" the exclusion.
 - Migrations follow conventions set in `20260703000000_init_user_profiles.sql`: RLS enabled on every table, the shared `public.touch_updated_at()` trigger keeps `updated_at` current on mutable tables, and `public.handle_new_user()` auto-creates a `user_profiles` row per new auth user.
 - DB check constraints on `preferred_language`/`preferred_theme` must stay in sync with `SUPPORTED_LOCALES` and `THEMES` in the composables.
 - `app/types/database.types.ts` is **hand-written** to match the migrations (the CLI isn't linked yet), and `useSupabaseClient<Database>()` is typed against it. Update it by hand whenever a migration changes a table's shape; once `supabase link` is set up, regenerate with `supabase gen types typescript --linked > app/types/database.types.ts` (command is in the file header).

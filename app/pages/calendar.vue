@@ -13,15 +13,24 @@ interface CalTask {
   project: { name: string | null } | null
 }
 
-const { data } = await useAsyncData(
-  'calendar-tasks',
+const { data, refresh } = await useAsyncData(
+  'calendar-data',
   async () => {
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('id, title, priority, status, due_date, project:projects (name)')
-      .not('due_date', 'is', null)
-      .order('due_date', { ascending: true })
-    return { tasks: (tasks ?? []) as CalTask[] }
+    const [tasksRes, projectsRes] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('id, title, priority, status, due_date, project:projects (name)')
+        .not('due_date', 'is', null)
+        .order('due_date', { ascending: true }),
+      supabase
+        .from('projects')
+        .select('id, name')
+        .order('name', { ascending: true })
+    ])
+    return {
+      tasks: (tasksRes.data ?? []) as CalTask[],
+      projects: projectsRes.data ?? []
+    }
   },
   { lazy: true }
 )
@@ -39,7 +48,9 @@ function dayKey(d: Date) {
 const tasksByDay = computed(() => {
   const map: Record<string, CalTask[]> = {}
   for (const tk of data.value?.tasks ?? []) {
-    ;(map[tk.due_date] ??= []).push(tk)
+    if (!tk.due_date) continue
+    const key = tk.due_date.split('T')[0]
+    ;(map[key] ??= []).push(tk)
   }
   return map
 })
@@ -71,7 +82,9 @@ const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
 // Days-from-today for a due_date string (negative = past).
 function daysUntil(due: string) {
-  const [y, m, d] = due.split('-').map(Number)
+  if (!due) return 0
+  const datePart = due.split('T')[0]
+  const [y, m, d] = datePart.split('-').map(Number)
   return Math.round((new Date(y, m - 1, d).getTime() - startOfToday.getTime()) / 86_400_000)
 }
 
@@ -122,6 +135,65 @@ const PRIORITY_DOT: Record<string, string> = {
   high: 'var(--tf-color-priority-high)',
   critical: 'var(--tf-color-priority-critical)'
 }
+
+// --- task creation ---
+const showForm = ref(false)
+const titleInput = ref<HTMLInputElement | null>(null)
+const newTitle = ref('')
+const newProjectId = ref('')
+const newDueDate = ref('')
+const creating = ref(false)
+const errorMsg = ref('')
+
+const projectOptions = computed(() =>
+  (data.value?.projects ?? []).map((p) => ({ value: p.id, label: p.name }))
+)
+
+function openCreateForm(date: Date) {
+  if (!data.value?.projects?.length) {
+    alert(t('error.generic') || 'No projects available.')
+    return
+  }
+  newDueDate.value = dayKey(date)
+  newProjectId.value = projectOptions.value[0]?.value ?? ''
+  newTitle.value = ''
+  errorMsg.value = ''
+  showForm.value = true
+  nextTick(() => titleInput.value?.focus())
+}
+
+function cancelForm() {
+  showForm.value = false
+  newTitle.value = ''
+  errorMsg.value = ''
+}
+
+async function createTask() {
+  const title = newTitle.value.trim()
+  if (!title || !newProjectId.value) return
+  creating.value = true
+  errorMsg.value = ''
+  const { data: auth } = await supabase.auth.getUser()
+  const myUserId = auth.user?.id
+  const { error: insertError } = await supabase.from('tasks').insert({
+    project_id: newProjectId.value,
+    title,
+    priority: 'medium',
+    type: 'other',
+    due_date: newDueDate.value || null,
+    created_by: myUserId
+  })
+  creating.value = false
+  if (insertError) {
+    errorMsg.value = t('error.generic')
+    return
+  }
+  cancelForm()
+  await refresh()
+}
+
+const taskModal = useTaskModal()
+watch(taskModal.refreshTrigger, () => refresh())
 </script>
 
 <template>
@@ -180,10 +252,11 @@ const PRIORITY_DOT: Record<string, string> = {
             :key="i"
             class="min-h-24 border-b border-r border-border p-2 transition [&:nth-child(7n)]:border-r-0"
             :class="[
-              cell ? 'hover:bg-surface-alt/40' : 'bg-surface-alt/30',
+              cell ? 'cursor-pointer hover:bg-surface-alt/40' : 'bg-surface-alt/30',
               cell && (i % 7 === 0 || i % 7 === 6) ? 'bg-surface-alt/20' : '',
               cell && dayKey(cell) === todayKey ? 'bg-primary/5' : ''
             ]"
+            @click="cell ? openCreateForm(cell) : undefined"
           >
             <template v-if="cell">
               <div
@@ -197,16 +270,16 @@ const PRIORITY_DOT: Record<string, string> = {
                 {{ cell.getDate() }}
               </div>
               <div class="flex flex-col gap-1">
-                <NuxtLink
+                <button type="button"
                   v-for="tk in (tasksByDay[dayKey(cell)] ?? []).slice(0, 3)"
                   :key="tk.id"
-                  :to="`/tasks/${tk.id}`"
+                  @click.stop="taskModal.open(tk.id)"
                   class="flex items-center gap-1.5 truncate rounded-md border-l-2 bg-surface-alt px-1.5 py-1 text-xs font-medium transition hover:shadow-sm"
                   :style="`border-color:${PRIORITY_DOT[tk.priority]}`"
                   :class="tk.status === 'done' ? 'text-text-muted line-through' : 'text-text'"
                 >
                   <span class="truncate">{{ tk.title }}</span>
-                </NuxtLink>
+                </button>
                 <span
                   v-if="(tasksByDay[dayKey(cell)] ?? []).length > 3"
                   class="px-1 text-xs font-medium text-text-muted"
@@ -246,10 +319,10 @@ const PRIORITY_DOT: Record<string, string> = {
           </p>
 
           <ul v-else class="mt-3 flex flex-col gap-1">
-            <NuxtLink
+            <button type="button"
               v-for="tk in upcoming"
               :key="tk.id"
-              :to="`/tasks/${tk.id}`"
+              @click.stop="taskModal.open(tk.id)"
               class="flex items-center gap-2.5 rounded-xl px-2 py-2 transition hover:bg-surface-alt"
             >
               <span
@@ -266,7 +339,7 @@ const PRIORITY_DOT: Record<string, string> = {
               >
                 {{ formatDate(tk.due_date) }}
               </span>
-            </NuxtLink>
+            </button>
           </ul>
         </div>
 
@@ -286,5 +359,64 @@ const PRIORITY_DOT: Record<string, string> = {
         </div>
       </div>
     </div>
+
+    <!-- Create task modal -->
+    <Teleport to="body">
+      <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="cancelForm" />
+        <div class="relative w-full max-w-sm rounded-2xl bg-surface p-6 shadow-modal">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="text-lg font-bold text-text">{{ t('task.create') }}</h2>
+            <button
+              type="button"
+              class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
+              @click="cancelForm"
+            >
+              <AppIcon name="x" class="h-5 w-5" />
+            </button>
+          </div>
+          <form class="mt-4 flex flex-col gap-4" @submit.prevent="createTask">
+            <div>
+              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('task.titlePlaceholder') }}</label>
+              <input
+                ref="titleInput"
+                v-model="newTitle"
+                type="text"
+                maxlength="200"
+                required
+                class="w-full rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                @keyup.esc="cancelForm"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('nav.projects') }}</label>
+              <AppSelect
+                v-model="newProjectId"
+                :options="projectOptions"
+                required
+              />
+            </div>
+            <p v-if="errorMsg" class="text-sm text-danger">{{ errorMsg }}</p>
+            <div class="mt-2 flex justify-end gap-3">
+              <button
+                type="button"
+                class="rounded-xl border border-border px-4 py-2 text-sm font-medium text-text-muted transition hover:text-text"
+                @click="cancelForm"
+              >
+                {{ t('common.cancel') }}
+              </button>
+              <button
+                type="submit"
+                :disabled="creating || !newTitle.trim() || !newProjectId"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+              >
+                <AppIcon name="plus" class="h-4 w-4" />
+                {{ creating ? t('common.loading') : t('task.create') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

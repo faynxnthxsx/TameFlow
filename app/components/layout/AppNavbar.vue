@@ -2,10 +2,15 @@
 const { t } = useI18n()
 const route = useRoute()
 
-const sidebarOpen = useState('tf-sidebar-open', () => false)
+// Composable สิ่งที่สามารถนำมาประกอบเข้าด้วยกันได้
+  const sidebarOpen = useState('tf-sidebar-open', () => false)
 
-// Dashboard, company overview and invitations don't need the search box.
-const showSearch = computed(() => !['/', '/overview', '/invitations'].includes(route.path))
+// Dashboard, company overview, invitations, chat, settings, profile, reports etc. don't need the search box.
+const showSearch = computed(() => {
+  const p = route.path
+  // Only show exactly on Workspaces, Projects, and Activity root pages
+  return p === '/workspaces' || p === '/projects' || p === '/activity'
+})
 // Signing out lives on the Settings page (Account section), not the navbar.
 </script>
 

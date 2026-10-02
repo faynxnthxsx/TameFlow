@@ -1,4 +1,4 @@
-export const SUPPORTED_LOCALES = ['en', 'th', 'ja'] as const
+export const SUPPORTED_LOCALES = ['en', 'th', 'ja', ] as const
 export type LocaleId = (typeof SUPPORTED_LOCALES)[number]
 
 const STORAGE_KEY = 'tf_locale'
@@ -45,15 +45,18 @@ export function useLocalePreference() {
   function setPreferredLocale(id: LocaleId) {
     setLocale(id)
     storeLocalePreference(id)
-    if (user.value) {
-      void supabase
-        .from('user_profiles')
-        .update({ preferred_language: id })
-        .eq('id', user.value.id)
-        .then(({ error }) => {
-          if (error) console.warn('Failed to sync preferred_language:', error.message)
-        })
+    const uid = user.value?.id
+    if (!uid) {
+      console.warn('[setPreferredLocale] skipped DB sync — no user id')
+      return
     }
+    void supabase
+      .from('user_profiles')
+      .update({ preferred_language: id })
+      .eq('id', uid)
+      .then(({ error }) => {
+        if (error) console.warn('Failed to sync preferred_language:', error.message)
+      })
   }
 
   return { locale, setPreferredLocale }

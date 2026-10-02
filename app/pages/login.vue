@@ -74,7 +74,7 @@ async function signInWithProvider(provider: 'google' | 'github') {
 </script>
 
 <template>
-  <div class="w-full max-w-md rounded-2xl border border-border bg-surface p-8 shadow-modal">
+  <div class="w-full max-w-md rounded-2xl border border-border/60 bg-surface/80 p-8 shadow-2xl backdrop-blur-md ring-1 ring-white/5">
     <div class="flex flex-col items-center text-center">
       <BrandLogo :with-text="false" size="lg" />
       <h1 class="mt-4 text-2xl font-bold text-text">{{ t('auth.login.welcome') }}</h1>

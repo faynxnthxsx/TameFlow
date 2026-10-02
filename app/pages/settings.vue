@@ -367,21 +367,7 @@ async function signOut() {
           <p v-else class="mt-3 text-sm text-text-muted">{{ t('activity.empty') }}</p>
         </section>
 
-        <!-- Shortcuts -->
-        <section class="rounded-2xl border border-border bg-surface p-5 shadow-card">
-          <h2 class="mb-3 font-semibold text-text">{{ t('settings.shortcuts') }}</h2>
-          <div class="grid grid-cols-2 gap-2">
-            <NuxtLink
-              v-for="sc in SHORTCUTS"
-              :key="sc.to"
-              :to="sc.to"
-              class="flex items-center gap-2 rounded-xl border border-border px-3 py-2.5 text-sm font-medium text-text transition hover:border-primary/50 hover:bg-surface-alt"
-            >
-              <AppIcon :name="sc.icon" class="h-4 w-4 shrink-0 text-text-muted" />
-              <span class="truncate">{{ t(`settings.${sc.key}`) }}</span>
-            </NuxtLink>
-          </div>
-        </section>
+
       </aside>
     </div>
 

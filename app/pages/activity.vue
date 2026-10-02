@@ -15,6 +15,7 @@ interface FeedItem {
   assigneeId: string | null
   complete: boolean // task marked done
   link: string
+  taskId: string | null
 }
 
 const { data, pending } = await useAsyncData(
@@ -53,7 +54,8 @@ const { data, pending } = await useAsyncData(
         createdBy: tk.created_by,
         assigneeId: tk.assignee_id,
         complete: tk.status === 'done',
-        link: `/tasks/${tk.id}`
+        link: `/tasks/${tk.id}`,
+        taskId: tk.id
       })),
       ...(projectsRes.data ?? []).map((p): FeedItem => ({
         id: `p-${p.id}`,
@@ -67,7 +69,8 @@ const { data, pending } = await useAsyncData(
         createdBy: p.created_by,
         assigneeId: null,
         complete: false,
-        link: `/projects/${p.id}`
+        link: `/projects/${p.id}`,
+        taskId: null
       }))
     ].sort((a, b) => b.at.localeCompare(a.at))
 
@@ -220,6 +223,9 @@ function initials(name: string | null) {
 function isDone(i: FeedItem) {
   return i.kind === 'project' || i.complete
 }
+
+const taskModal = useTaskModal()
+watch(taskModal.refreshTrigger, () => refresh())
 </script>
 
 <template>
@@ -301,23 +307,28 @@ function isDone(i: FeedItem) {
                 <div
                   class="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-surface p-4 shadow-card transition hover:border-primary/50"
                 >
-                  <NuxtLink :to="item.link" class="min-w-0 flex-1">
-                    <p class="truncate text-sm">
-                      <span class="text-text-muted">
-                        {{ t(item.kind === 'task' ? 'activity.createdTask' : 'activity.createdProject') }}
-                      </span>
-                      <span class="font-semibold text-text">{{ item.title }}</span>
-                    </p>
-                    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                      <span v-if="item.team" class="truncate">{{ item.team }}</span>
-                      <span
-                        v-if="item.tag"
-                        class="inline-flex items-center gap-1 rounded-md bg-surface-alt px-1.5 py-0.5 text-text"
-                      >
-                        <AppIcon name="projects" class="h-3 w-3" />{{ item.tag }}
-                      </span>
-                    </div>
-                  </NuxtLink>
+                <component
+                  :is="item.kind === 'task' ? 'button' : resolveComponent('NuxtLink')"
+                  :to="item.kind === 'project' ? item.link : undefined"
+                  @click="item.kind === 'task' && item.taskId ? taskModal.open(item.taskId) : undefined"
+                  class="min-w-0 flex-1 text-left"
+                >
+                  <p class="truncate text-sm">
+                    <span class="text-text-muted">
+                      {{ t(item.kind === 'task' ? 'activity.createdTask' : 'activity.createdProject') }}
+                    </span>
+                    <span class="font-semibold text-text">{{ item.title }}</span>
+                  </p>
+                  <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                    <span v-if="item.team" class="truncate">{{ item.team }}</span>
+                    <span
+                      v-if="item.tag"
+                      class="inline-flex items-center gap-1 rounded-md bg-surface-alt px-1.5 py-0.5 text-text"
+                    >
+                      <AppIcon name="projects" class="h-3 w-3" />{{ item.tag }}
+                    </span>
+                  </div>
+                </component>
 
                   <!-- actor + time -->
                   <div class="hidden shrink-0 items-center gap-2 sm:flex">

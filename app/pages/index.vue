@@ -266,6 +266,9 @@ function timeAgo(iso: string) {
   }
   return rtf.format(0, 'second')
 }
+
+const taskModal = useTaskModal()
+watch(taskModal.refreshTrigger, () => refresh())
 </script>
 
 <template>
@@ -362,7 +365,7 @@ function timeAgo(iso: string) {
         </p>
         <ul v-else class="mt-4 space-y-1">
           <li v-for="tk in data.dueSoon" :key="tk.id">
-            <NuxtLink :to="`/tasks/${tk.id}`" class="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-alt">
+            <button type="button" @click="taskModal.open(tk.id)" class="w-full text-left flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-alt">
               <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="`background:${STATUS_COLOR[tk.status]}`" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-sm font-medium text-text">{{ tk.title }}</span>
@@ -374,7 +377,7 @@ function timeAgo(iso: string) {
               >
                 {{ tk.due_date ? formatDate(tk.due_date) : '' }}
               </span>
-            </NuxtLink>
+            </button>
           </li>
         </ul>
       </section>

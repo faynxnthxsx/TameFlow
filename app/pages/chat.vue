@@ -71,10 +71,23 @@ const sharedLinks = computed(() => {
   return out.slice(0, 10)
 })
 
+const editingId = ref<string | null>(null)
+const editDraft = ref('')
+const msgSearch = ref('')
+const showOptions = ref(false)
+const showSearch = ref(false)
+
+function dateLabel(iso: string) {
+  return new Date(iso).toLocaleDateString(locale.value)
+}
+
 async function openTeam(id: string) {
   activeId.value = id
   if (import.meta.client) localStorage.setItem(LAST_TEAM_KEY, id)
   showColors.value = false
+  showOptions.value = false
+  showSearch.value = false
+  msgSearch.value = ''
   chat.reset()
   await Promise.all([chat.fetchMessages(id), chat.fetchColor(id), chat.fetchMembers(id)])
   chat.subscribe(id)
@@ -111,6 +124,39 @@ async function send() {
   scrollToBottom()
 }
 
+const imageInput = ref<HTMLInputElement | null>(null)
+const uploadingImage = ref(false)
+
+async function uploadImage(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !activeId.value || !myId.value) return
+  
+  uploadingImage.value = true
+  const ext = file.name.split('.').pop()
+  const fileName = `chat/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
+  const filePath = `${myId.value}/${fileName}`
+
+  try {
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file)
+      
+    if (uploadError) throw uploadError
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath)
+      
+    await chat.sendMessage(activeId.value, `![image](${publicUrl})`)
+    scrollToBottom()
+  } catch (err) {
+    alert(t('error.generic') || 'Upload failed')
+  } finally {
+    uploadingImage.value = false
+    if (imageInput.value) imageInput.value.value = ''
+  }
+}
+
 async function pickColor(c: string) {
   if (!activeId.value) return
   await chat.setColor(activeId.value, c)
@@ -126,14 +172,71 @@ watch(() => chat.messages.length, scrollToBottom)
 
 onBeforeUnmount(() => chat.unsubscribe())
 
+
+const filteredMessages = computed(() => {
+  const q = msgSearch.value.toLowerCase().trim()
+  if (!q) return chat.messages
+  return chat.messages.filter((m) => m.body.toLowerCase().includes(q))
+})
+
+const messagesWithDate = computed(() => {
+  const result: any[] = []
+  let lastDate = ''
+  for (const m of filteredMessages.value) {
+    const d = new Date(m.createdAt).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+    if (d !== lastDate) {
+      result.push({ isDate: true, id: `date-${m.id}`, text: d })
+      lastDate = d
+    }
+    result.push({ isDate: false, ...m })
+  }
+  return result
+})
+
+function isImageMessage(body: string) {
+  return body.startsWith('![image](') && body.endsWith(')')
+}
+
+function extractImageUrl(body: string) {
+  return body.slice(9, -1)
+}
+
 function initials(name: string) {
   return name.trim().slice(0, 2).toUpperCase() || '??'
 }
 function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
-function dateLabel(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value)
+
+async function saveEdit(id: string) {
+  if (!editDraft.value.trim()) return
+  await chat.updateMessage(id, editDraft.value)
+  editingId.value = null
+  editDraft.value = ''
+}
+
+function startEdit(id: string, body: string) {
+  editingId.value = id
+  editDraft.value = body
+}
+
+function cancelEdit() {
+  editingId.value = null
+  editDraft.value = ''
+}
+
+async function deleteMsg(id: string) {
+  if (confirm(t('chat.confirmDelete'))) {
+    await chat.deleteMessage(id)
+  }
+}
+
+function canDeleteMsg(userId: string) {
+  return userId === myId.value || (activeTeam.value && resolveCapabilities(activeTeam.value.role).manageChat)
+}
+
+function canEditMsg(userId: string) {
+  return userId === myId.value
 }
 
 const TINTS = [
@@ -243,55 +346,101 @@ function tint(id: string) {
             {{ chat.members.length }}
           </span>
 
-          <!-- Color picker (managers only) -->
-          <div v-if="canSetColor" class="relative">
+          <!-- Options Menu -->
+          <div class="relative">
             <button
               type="button"
-              class="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs text-text-muted transition hover:text-text"
-              @click="showColors = !showColors"
+              class="flex items-center justify-center h-8 w-8 rounded-lg text-text-muted transition hover:bg-surface-alt hover:text-text"
+              @click="showOptions = !showOptions"
             >
-              <span class="h-4 w-4 rounded-full" :style="{ backgroundColor: chat.color }" />
-              {{ t('chat.color') }}
+              <AppIcon name="menu" class="h-5 w-5" />
             </button>
+            
+            <div v-if="showOptions" class="fixed inset-0 z-10" @click="showOptions = false"></div>
+            
             <div
-              v-if="showColors"
-              class="absolute right-0 top-full z-20 mt-2 w-64 rounded-2xl border border-border bg-surface p-4 shadow-card"
+              v-if="showOptions"
+              class="absolute right-0 top-full z-20 mt-2 w-56 rounded-2xl border border-border bg-surface p-2 shadow-card"
             >
-              <p class="mb-3 text-xs font-semibold text-text-muted">{{ t('chat.color') }}</p>
-              <div class="grid grid-cols-5 gap-3">
+              <!-- Search Messages Option -->
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-text transition hover:bg-surface-alt"
+                @click="showSearch = !showSearch; showOptions = false"
+              >
+                <AppIcon name="search" class="h-4 w-4 text-text-muted" />
+                {{ t('chat.searchMessages', 'Search messages') }}
+              </button>
+
+              <!-- Color picker (managers only) -->
+              <div v-if="canSetColor" class="mt-1 border-t border-border pt-1">
                 <button
-                  v-for="c in CHAT_COLORS"
-                  :key="c"
                   type="button"
-                  class="grid aspect-square w-full place-items-center rounded-full transition hover:opacity-80"
-                  :style="{ backgroundColor: c }"
-                  @click="pickColor(c)"
+                  class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-text transition hover:bg-surface-alt"
+                  @click="showColors = !showColors"
                 >
-                  <AppIcon v-if="chat.color === c" name="check" class="h-4 w-4 text-white" />
+                  <span class="flex items-center gap-3">
+                    <span class="h-4 w-4 rounded-full" :style="{ backgroundColor: chat.color }" />
+                    {{ t('chat.color') }}
+                  </span>
+                  <AppIcon name="chevron-down" class="h-4 w-4 text-text-muted transition" :class="showColors ? 'rotate-180' : ''" />
                 </button>
+                <div v-if="showColors" class="mt-2 grid grid-cols-5 gap-2 px-2 pb-2">
+                  <button
+                    v-for="c in CHAT_COLORS"
+                    :key="c"
+                    type="button"
+                    class="grid aspect-square w-full place-items-center rounded-full transition hover:opacity-80"
+                    :style="{ backgroundColor: c }"
+                    @click="pickColor(c)"
+                  >
+                    <AppIcon v-if="chat.color === c" name="check" class="h-4 w-4 text-white" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Messages -->
+        <!-- Search Bar -->
+        <div v-if="showSearch" class="border-b border-border bg-surface-alt/50 px-4 py-2 flex items-center gap-2">
+          <div class="relative w-full max-w-sm ml-auto">
+            <AppIcon name="search" class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+            <input
+              v-model="msgSearch"
+              type="text"
+              :placeholder="t('chat.searchMessages', 'Search messages...')"
+              class="w-full rounded-xl border border-border bg-surface py-1.5 pl-9 pr-3 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
+            />
+          </div>
+          <button type="button" class="p-1.5 text-text-muted hover:text-text" @click="showSearch = false; msgSearch = ''">
+            <AppIcon name="x" class="h-4 w-4" />
+          </button>
+        </div>
+
         <div ref="scroller" class="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-          <p v-if="chat.loading && chat.messages.length === 0" class="text-center text-sm text-text-muted">
+          <p v-if="chat.loading && filteredMessages.length === 0" class="text-center text-sm text-text-muted">
             {{ t('common.loading') }}
           </p>
           <p
-            v-else-if="chat.messages.length === 0"
+            v-else-if="filteredMessages.length === 0"
             class="py-10 text-center text-sm text-text-muted"
           >
-            {{ t('chat.empty') }}
+            {{ msgSearch ? t('chat.noResults', 'No messages found') : t('chat.empty') }}
           </p>
 
-          <div
-            v-for="m in chat.messages"
-            :key="m.id"
-            class="flex items-end gap-2"
-            :class="m.userId === myId ? 'flex-row-reverse' : ''"
-          >
+          <template v-for="m in messagesWithDate" :key="m.id">
+            <div v-if="m.isDate" class="py-4 text-center">
+              <span class="rounded-full bg-surface-alt px-3 py-1 text-[10px] font-medium text-text-muted">
+                {{ m.text }}
+              </span>
+            </div>
+
+            <div
+              v-else
+              class="flex items-end gap-2"
+              :class="m.userId === myId ? 'flex-row-reverse' : ''"
+            >
             <img
               v-if="m.authorAvatar"
               :src="m.authorAvatar"
@@ -311,21 +460,76 @@ function tint(id: string) {
               >
                 {{ m.authorName }}
               </p>
-              <div
-                class="whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm"
-                :class="m.userId === myId ? 'text-white' : 'bg-surface-alt text-text'"
-                :style="m.userId === myId ? { backgroundColor: chat.color } : {}"
-              >
-                {{ m.body }}
+              <div class="group relative flex items-center gap-2" :class="m.userId === myId ? 'flex-row-reverse' : ''">
+                <div
+                  v-if="editingId === m.id"
+                  class="flex w-full items-center gap-2 rounded-2xl bg-surface-alt p-1"
+                >
+                  <input
+                    v-model="editDraft"
+                    type="text"
+                    class="flex-1 rounded-xl bg-transparent px-2 py-1 text-sm text-text focus:outline-none"
+                    @keyup.enter="saveEdit(m.id)"
+                    @keyup.esc="cancelEdit"
+                  />
+                  <button type="button" class="text-success hover:opacity-80" @click="saveEdit(m.id)">
+                    <AppIcon name="check" class="h-4 w-4" />
+                  </button>
+                  <button type="button" class="pr-2 text-text-muted hover:opacity-80" @click="cancelEdit">
+                    <AppIcon name="x" class="h-4 w-4" />
+                  </button>
+                </div>
+                <div
+                  v-else
+                  class="whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm"
+                  :class="[
+                    m.userId === myId && !isImageMessage(m.body) ? 'text-white' : '',
+                    !isImageMessage(m.body) ? 'bg-surface-alt text-text' : 'p-0 bg-transparent'
+                  ]"
+                  :style="m.userId === myId && !isImageMessage(m.body) ? { backgroundColor: chat.color } : {}"
+                >
+                  <img
+                    v-if="isImageMessage(m.body)"
+                    :src="extractImageUrl(m.body)"
+                    class="max-w-[240px] max-h-[320px] rounded-2xl object-cover shadow-sm border border-border"
+                  />
+                  <template v-else>{{ m.body }}</template>
+                </div>
+                
+                <div
+                  v-if="editingId !== m.id && (canEditMsg(m.userId) || canDeleteMsg(m.userId))"
+                  class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                >
+                  <button
+                    v-if="canEditMsg(m.userId)"
+                    type="button"
+                    class="rounded-full p-1 text-text-muted hover:bg-surface-alt hover:text-text"
+                    title="Edit"
+                    @click="startEdit(m.id, m.body)"
+                  >
+                    <AppIcon name="edit" class="h-4 w-4" />
+                  </button>
+                  <button
+                    v-if="canDeleteMsg(m.userId)"
+                    type="button"
+                    class="rounded-full p-1 text-text-muted hover:bg-surface-alt hover:text-danger"
+                    title="Delete"
+                    @click="deleteMsg(m.id)"
+                  >
+                    <AppIcon name="trash" class="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <p
-                class="mt-0.5 text-[10px] text-text-muted"
-                :class="m.userId === myId ? 'text-right mr-1' : 'ml-1'"
+                class="mt-0.5 text-[10px] text-text-muted flex items-center"
+                :class="m.userId === myId ? 'justify-end mr-1' : 'ml-1'"
               >
                 {{ timeLabel(m.createdAt) }}
+                <span v-if="m.updatedAt" class="ml-1 opacity-75">(edited)</span>
               </p>
             </div>
-          </div>
+            </div>
+          </template>
         </div>
 
         <!-- Composer -->
@@ -334,12 +538,23 @@ function tint(id: string) {
           class="flex items-center gap-2 border-t border-border px-3 py-3"
           @submit.prevent="send"
         >
+          <input type="file" ref="imageInput" accept="image/*" class="hidden" @change="uploadImage" />
+          <button
+            type="button"
+            class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-muted transition hover:bg-surface-alt hover:text-text"
+            @click="imageInput?.click()"
+            :disabled="uploadingImage"
+          >
+            <AppIcon v-if="uploadingImage" name="check" class="h-5 w-5 animate-spin" />
+            <AppIcon v-else name="camera" class="h-5 w-5" />
+          </button>
           <input
             v-model="draft"
             type="text"
             maxlength="2000"
-            :placeholder="t('chat.placeholder')"
-            class="flex-1 rounded-full border border-border bg-surface-alt px-4 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            :placeholder="uploadingImage ? t('common.loading') : t('chat.placeholder')"
+            :disabled="uploadingImage"
+            class="flex-1 rounded-full border border-border bg-surface-alt px-4 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
           />
           <button
             type="submit"
