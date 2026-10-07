@@ -3,6 +3,23 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  vite: {
+    server: {
+      allowedHosts: true
+    }
+  },
+
+  app: {
+    pageTransition: false,
+    layoutTransition: false
+  },
+
+  runtimeConfig: {
+    lineLoginChannelId: process.env.LINE_LOGIN_CHANNEL_ID,
+    lineLoginChannelSecret: process.env.LINE_LOGIN_CHANNEL_SECRET,
+    lineBotChannelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',

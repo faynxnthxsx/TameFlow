@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CHAT_COLORS } from '~/stores/chat'
 import { resolveCapabilities } from '~/utils/permissions'
+import { formatDate as _formatDate } from '~/utils/dates'
 
 // Messenger-style team chat: teams on the left, the group conversation in the
 // middle, team details (members + shared links) on the right. Live messages
@@ -183,7 +184,7 @@ const messagesWithDate = computed(() => {
   const result: any[] = []
   let lastDate = ''
   for (const m of filteredMessages.value) {
-    const d = new Date(m.createdAt).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+    const d = _formatDate(m.createdAt, locale.value)
     if (d !== lastDate) {
       result.push({ isDate: true, id: `date-${m.id}`, text: d })
       lastDate = d
@@ -199,10 +200,6 @@ function isImageMessage(body: string) {
 
 function extractImageUrl(body: string) {
   return body.slice(9, -1)
-}
-
-function initials(name: string) {
-  return name.trim().slice(0, 2).toUpperCase() || '??'
 }
 function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -441,18 +438,11 @@ function tint(id: string) {
               class="flex items-end gap-2"
               :class="m.userId === myId ? 'flex-row-reverse' : ''"
             >
-            <img
-              v-if="m.authorAvatar"
+            <AppAvatar
               :src="m.authorAvatar"
-              :alt="m.authorName"
-              class="h-7 w-7 shrink-0 rounded-full object-cover"
+              :name="m.authorName"
+              size="h-7 w-7"
             />
-            <span
-              v-else
-              class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary"
-            >
-              {{ initials(m.authorName) }}
-            </span>
             <div class="max-w-[75%]">
               <p
                 v-if="m.userId !== myId"
@@ -602,18 +592,11 @@ function tint(id: string) {
         </p>
         <ul class="space-y-2.5">
           <li v-for="m in chat.members" :key="m.id" class="flex items-center gap-2.5">
-            <img
-              v-if="m.avatar"
+            <AppAvatar
               :src="m.avatar"
-              :alt="m.name"
-              class="h-8 w-8 shrink-0 rounded-full object-cover"
+              :name="m.name"
+              size="h-8 w-8"
             />
-            <span
-              v-else
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary"
-            >
-              {{ initials(m.name) }}
-            </span>
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium text-text">{{ m.name }}</p>
               <p class="truncate text-xs text-text-muted">{{ t(`role.${m.role}`) }}</p>

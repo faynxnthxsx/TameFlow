@@ -67,3 +67,13 @@ export function canEditTask(role: WorkspaceRole, isOwnTask: boolean): boolean {
   const caps = resolveCapabilities(role)
   return caps.editAnyTask || (caps.editOwnTask && isOwnTask)
 }
+
+// ─── UI constants ────────────────────────────────────────────────────────────
+
+/** CSS classes for role badges — shared across overview, members, workspace pages. */
+export const ROLE_BADGE_CLASSES: Record<WorkspaceRole, string> = {
+  owner: 'bg-primary/10 text-primary',
+  admin: 'bg-info/10 text-info',
+  member: 'bg-surface-alt text-text',
+  viewer: 'bg-surface-alt text-text-muted'
+}

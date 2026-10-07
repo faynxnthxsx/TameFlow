@@ -12,7 +12,7 @@ const { data, pending } = await useAsyncData(
     if (!uid) return { uid: '', email, display_name: '', avatar_url: '', created_at: '' }
     const { data: row } = await supabase
       .from('user_profiles')
-      .select('display_name, avatar_url, created_at, line_user_id')
+      .select('display_name, avatar_url, created_at')
       .eq('id', uid)
       .single()
     return {
@@ -20,8 +20,7 @@ const { data, pending } = await useAsyncData(
       email,
       display_name: row?.display_name ?? '',
       avatar_url: row?.avatar_url ?? '',
-      created_at: row?.created_at ?? '',
-      line_user_id: row?.line_user_id ?? ''
+      created_at: row?.created_at ?? ''
     }
   },
   { lazy: true }
@@ -29,10 +28,8 @@ const { data, pending } = await useAsyncData(
 
 const displayName = ref('')
 const avatarUrl = ref('')
-const lineUserId = ref('')
 const saving = ref(false)
 const errorMsg = ref('')
-const savedMsg = ref('')
 
 // --- avatar upload ---
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024 // 2 MB
@@ -77,7 +74,6 @@ async function onFileChange(e: Event) {
 function removePhoto() {
   avatarUrl.value = ''
   errorMsg.value = ''
-  savedMsg.value = ''
 }
 
 // Seed the editable fields once the profile loads.
@@ -87,32 +83,29 @@ watch(
     if (!d) return
     displayName.value = d.display_name
     avatarUrl.value = d.avatar_url
-    lineUserId.value = d.line_user_id
   },
   { immediate: true }
 )
 
-const initial = computed(() => (displayName.value || data.value?.email || '?').charAt(0).toUpperCase())
+const toast = useToast()
 
 async function save() {
   if (!data.value?.uid) return
   saving.value = true
-  errorMsg.value = ''
-  savedMsg.value = ''
   const { error } = await supabase
     .from('user_profiles')
     .update({
       display_name: displayName.value.trim() || null,
-      avatar_url: avatarUrl.value.trim() || null,
-      line_user_id: lineUserId.value.trim() || null
+      avatar_url: avatarUrl.value.trim() || null
     })
     .eq('id', data.value.uid)
   saving.value = false
   if (error) {
-    errorMsg.value = t('error.generic')
+    toast.error(t('error.generic'))
     return
   }
-  savedMsg.value = t('profile.saved')
+  toast.success(t('profile.saved'))
+  
   data.value.display_name = displayName.value.trim()
   data.value.avatar_url = avatarUrl.value.trim()
   // Reflect the change everywhere (sidebar footer, etc.) immediately.
@@ -120,6 +113,9 @@ async function save() {
     name: displayName.value.trim() || data.value.email.split('@')[0] || 'User',
     avatar: avatarUrl.value.trim() || null
   })
+
+  // Redirect back to settings page
+  useRouter().push('/settings')
 }
 
 function formatDate(iso: string) {
@@ -175,20 +171,6 @@ function formatDate(iso: string) {
           />
         </label>
 
-        <label class="block">
-          <span class="text-sm font-medium text-text">{{ t('profile.lineUserId') }}</span>
-          <input
-            v-model="lineUserId"
-            type="text"
-            maxlength="50"
-            :placeholder="t('profile.lineUserIdPlaceholder')"
-            class="mt-1.5 w-full rounded-xl border border-border bg-surface px-3 py-2 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          <p class="mt-1.5 flex items-center gap-1.5 text-xs text-text-muted">
-            <AppIcon name="info" class="h-3.5 w-3.5 opacity-70" />
-            {{ t('profile.lineUserIdHint') }}
-          </p>
-        </label>
 
         <label class="block">
           <span class="text-sm font-medium text-text">{{ t('profile.email') }}</span>

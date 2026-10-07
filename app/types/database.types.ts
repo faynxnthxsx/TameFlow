@@ -9,6 +9,7 @@ export type Database = {
           id: string
           display_name: string | null
           avatar_url: string | null
+          line_user_id: string | null
           preferred_language: string
           preferred_theme: string
           created_at: string
@@ -18,6 +19,7 @@ export type Database = {
           id: string
           display_name?: string | null
           avatar_url?: string | null
+          line_user_id?: string | null
           preferred_language?: string
           preferred_theme?: string
           created_at?: string
@@ -27,6 +29,7 @@ export type Database = {
           id?: string
           display_name?: string | null
           avatar_url?: string | null
+          line_user_id?: string | null
           preferred_language?: string
           preferred_theme?: string
           created_at?: string

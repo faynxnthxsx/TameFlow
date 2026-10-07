@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDate as _formatDate, timeAgo as _timeAgo } from '~/utils/dates'
 import type { DueStatus } from '~/utils/dates'
 import type { TaskStatus } from '~/utils/tasks'
 
@@ -233,9 +234,8 @@ const areaPath = computed(() => {
 })
 
 // --- display helpers ---
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value, { day: 'numeric', month: 'short' })
-}
+const formatDate = (iso?: string | null) => _formatDate(iso, locale.value)
+const timeAgo = (iso?: string | null) => _timeAgo(iso, locale.value)
 
 const DUE_CLASSES: Record<DueStatus, string> = {
   overdue: 'text-danger font-medium',
@@ -248,23 +248,6 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
   done: 'var(--tf-color-success)',
   in_progress: 'var(--tf-color-primary)',
   todo: 'var(--tf-color-status-pending)'
-}
-
-const RT_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ['year', 31536000],
-  ['month', 2592000],
-  ['week', 604800],
-  ['day', 86400],
-  ['hour', 3600],
-  ['minute', 60]
-]
-function timeAgo(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000
-  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' })
-  for (const [unit, secs] of RT_UNITS) {
-    if (diff >= secs) return rtf.format(-Math.floor(diff / secs), unit)
-  }
-  return rtf.format(0, 'second')
 }
 
 const taskModal = useTaskModal()
@@ -428,18 +411,7 @@ watch(taskModal.refreshTrigger, () => refresh())
         <ul v-else class="mt-4 space-y-3">
           <li v-for="item in data?.activity ?? []" :key="item.id">
             <NuxtLink :to="item.link" class="flex items-start gap-3">
-              <img
-                v-if="item.avatar"
-                :src="item.avatar"
-                alt=""
-                class="h-8 w-8 shrink-0 rounded-full object-cover"
-              />
-              <div
-                v-else
-                class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-alt text-xs font-medium text-text-muted"
-              >
-                {{ (item.actor ?? '?').charAt(0).toUpperCase() }}
-              </div>
+              <AppAvatar :src="item.avatar" :name="item.actor ?? '?'" size="h-8 w-8" />
               <div class="min-w-0 flex-1">
                 <p class="text-sm text-text">
                   <span class="font-medium">{{ item.actor ?? '—' }}</span>

@@ -1,13 +1,34 @@
 <script setup lang="ts">
 const taskModal = useTaskModal()
+
+useHead({
+  script: [
+    {
+      children: `(function() {
+        try {
+          var theme = localStorage.getItem('tf_theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (theme === 'dark-mode' || (!theme && prefersDark)) {
+            document.documentElement.dataset.theme = 'dark-mode';
+          } else {
+            document.documentElement.dataset.theme = 'corporate-blue';
+          }
+        } catch(e) {}
+      })()`
+    }
+  ]
+})
 </script>
 
 <template>
   <div>
+    <NuxtLoadingIndicator color="var(--tf-color-primary)" :height="3" />
     <NuxtRouteAnnouncer />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+
+    <AppToast />
 
     <Teleport to="body">
       <div v-if="taskModal.selectedTaskId.value" class="fixed inset-0 z-[100] flex justify-end">

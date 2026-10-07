@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { CompanyDashboard } from '~/stores/workspaces'
 import { TASK_TYPES } from '~/utils/tasks'
+import { formatDate as _formatDate, formatDateTime as _formatDateTime, calcPct } from '~/utils/dates'
+import { ROLE_BADGE_CLASSES } from '~/utils/permissions'
 
 // Company-owner overview: a single cross-team dashboard rolled up client-side
 // over existing RLS (see the store's fetchOverview). All numbers are real —
@@ -90,27 +92,11 @@ function typePct(v: number) {
   return data.value.totals.tasks ? Math.round((v / data.value.totals.tasks) * 100) : 0
 }
 
-// --- helpers ---
-function initials(name: string) {
-  return name.trim().slice(0, 2).toUpperCase() || '??'
-}
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString(locale.value, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const fmtDate = (iso?: string | null) => _formatDate(iso, locale.value)
+const fmtDateTime = (iso?: string | null) => _formatDateTime(iso, locale.value)
+
 function projectPct(p: { taskTotal: number; taskDone: number }) {
-  return p.taskTotal ? Math.round((p.taskDone / p.taskTotal) * 100) : 0
+  return calcPct(p.taskDone, p.taskTotal)
 }
 const todayLabel = computed(() =>
   new Date().toLocaleDateString(locale.value, { day: 'numeric', month: 'long', year: 'numeric' })
@@ -123,13 +109,6 @@ const STATS = computed(() => [
   { key: 'completion', icon: 'trending-up', tint: 'bg-info/10 text-info', value: `${companyPct.value}%` },
   { key: 'members', icon: 'user', tint: 'bg-brand-accent/10 text-brand-accent', value: data.value.totals.members }
 ] as const)
-
-const ROLE_BADGE: Record<string, string> = {
-  owner: 'bg-primary/10 text-primary',
-  admin: 'bg-info/10 text-info',
-  member: 'bg-surface-alt text-text',
-  viewer: 'bg-surface-alt text-text-muted'
-}
 
 const ACTIVITY_META: Record<string, { icon: string; tint: string }> = {
   project_created: { icon: 'projects', tint: 'bg-primary/10 text-primary' },
@@ -252,20 +231,13 @@ const ACTIVITY_META: Record<string, { icon: string; tint: string }> = {
           </p>
           <ul v-else class="mt-4 space-y-2.5">
             <li v-for="m in data.members" :key="m.id" class="flex items-center gap-3">
-              <img
-                v-if="m.avatar"
+              <AppAvatar
                 :src="m.avatar"
-                :alt="m.name"
-                class="h-9 w-9 rounded-full object-cover"
+                :name="m.name"
+                size="h-9 w-9"
               />
-              <span
-                v-else
-                class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary"
-              >
-                {{ initials(m.name) }}
-              </span>
               <span class="min-w-0 flex-1 truncate text-sm font-medium text-text">{{ m.name }}</span>
-              <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="ROLE_BADGE[m.role]">
+              <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="ROLE_BADGE_CLASSES[m.role]">
                 {{ t(`role.${m.role}`) }}
               </span>
             </li>

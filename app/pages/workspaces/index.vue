@@ -4,21 +4,19 @@ const store = useWorkspacesStore()
 
 const newName = ref('')
 const creating = ref(false)
-const errorMsg = ref('')
 const showForm = ref(false)
 const nameInput = ref<HTMLInputElement | null>(null)
 const view = ref<'grid' | 'list'>('grid')
+const toast = useToast()
 
 function openForm() {
   showForm.value = true
-  errorMsg.value = ''
   nextTick(() => nameInput.value?.focus())
 }
 
 function cancelForm() {
   showForm.value = false
   newName.value = ''
-  errorMsg.value = ''
 }
 
 const { pending } = await useAsyncData('workspaces', async () => {
@@ -30,34 +28,23 @@ async function create() {
   const name = newName.value.trim()
   if (!name) return
   creating.value = true
-  errorMsg.value = ''
   try {
     const id = await store.createWorkspace(name)
     newName.value = ''
+    toast.success(t('workspace.createSubtitle')) // Just a success message placeholder
     await navigateTo(`/workspaces/${id}`)
   } catch {
-    errorMsg.value = t('error.generic')
+    toast.error(t('error.generic'))
   } finally {
     creating.value = false
   }
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value)
-}
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString(locale.value, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  })
-}
+import { formatDate as _formatDate, formatDateTime as _formatDateTime, initials } from '~/utils/dates'
+import { ROLE_BADGE_CLASSES } from '~/utils/permissions'
 
-const ROLE_BADGE_CLASSES: Record<string, string> = {
-  owner: 'bg-primary/10 text-primary',
-  admin: 'bg-info/10 text-info',
-  member: 'bg-surface-alt text-text',
-  viewer: 'bg-surface-alt text-text-muted'
-}
+const formatDate = (iso?: string | null) => _formatDate(iso, locale.value)
+const formatDateTime = (iso?: string | null) => _formatDateTime(iso, locale.value)
 
 // A cohesive cool-tone gradient per card (blue / violet / cyan brand tokens
 // only — no clashing warm colors), stable per workspace id. The logo tile
@@ -76,12 +63,7 @@ function hash(id: string) {
 function cover(id: string) {
   return COVER_GRADIENTS[hash(id) % COVER_GRADIENTS.length]
 }
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/)
-  const first = parts[0]?.[0] ?? ''
-  const second = parts.length > 1 ? parts[1][0] : (parts[0]?.[1] ?? '')
-  return (first + second).toUpperCase() || 'WS'
-}
+
 </script>
 
 <template>
@@ -297,67 +279,58 @@ function initials(name: string) {
     </div>
 
     <!-- Create modal -->
-    <Teleport to="body">
-      <div
-        v-if="showForm"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      >
-        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="cancelForm" />
-        <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-modal">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-fg">
-                <AppIcon name="workspace" class="h-5 w-5" />
-              </span>
-              <div>
-                <h2 class="text-lg font-bold text-text">{{ t('workspace.create') }}</h2>
-                <p class="text-sm text-text-muted">{{ t('workspace.createSubtitle') }}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
-              @click="cancelForm"
-            >
-              <AppIcon name="x" class="h-5 w-5" />
-            </button>
+    <AppModal :show="showForm" max-width="max-w-md" @close="cancelForm">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-fg">
+            <AppIcon name="workspace" class="h-5 w-5" />
+          </span>
+          <div>
+            <h2 class="text-lg font-bold text-text">{{ t('workspace.create') }}</h2>
+            <p class="text-sm text-text-muted">{{ t('workspace.createSubtitle') }}</p>
           </div>
-
-          <form class="mt-5" @submit.prevent="create">
-            <label class="mb-1.5 block text-sm font-medium text-text">
-              {{ t('workspace.namePlaceholder') }}
-            </label>
-            <input
-              ref="nameInput"
-              v-model="newName"
-              type="text"
-              maxlength="80"
-              :placeholder="t('workspace.namePlaceholder')"
-              class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              @keyup.esc="cancelForm"
-            />
-            <p v-if="errorMsg" class="mt-2 text-sm text-danger">{{ errorMsg }}</p>
-
-            <div class="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
-                @click="cancelForm"
-              >
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                type="submit"
-                :disabled="creating || !newName.trim()"
-                class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
-              >
-                <AppIcon name="plus" class="h-4 w-4" />
-                {{ creating ? t('common.loading') : t('workspace.create') }}
-              </button>
-            </div>
-          </form>
         </div>
+        <button
+          type="button"
+          class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
+          @click="cancelForm"
+        >
+          <AppIcon name="x" class="h-5 w-5" />
+        </button>
       </div>
-    </Teleport>
+
+      <form class="mt-5" @submit.prevent="create">
+        <label class="mb-1.5 block text-sm font-medium text-text">
+          {{ t('workspace.namePlaceholder') }}
+        </label>
+        <input
+          ref="nameInput"
+          v-model="newName"
+          type="text"
+          maxlength="80"
+          :placeholder="t('workspace.namePlaceholder')"
+          class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          @keyup.esc="cancelForm"
+        />
+
+        <div class="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
+            @click="cancelForm"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="submit"
+            :disabled="creating || !newName.trim()"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+          >
+            <AppIcon name="plus" class="h-4 w-4" />
+            {{ creating ? t('common.loading') : t('workspace.create') }}
+          </button>
+        </div>
+      </form>
+    </AppModal>
   </div>
 </template>

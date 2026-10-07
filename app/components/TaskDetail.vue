@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { timeAgo as _timeAgo, formatDate as _formatDate } from '~/utils/dates'
 import type { DueStatus } from '~/utils/dates'
 import type { WorkspaceRole } from '~/utils/permissions'
 import type { TaskPriority, TaskStatus } from '~/utils/tasks'
@@ -139,12 +140,13 @@ function canDeleteComment(c: { author_id: string }) {
 
 async function addComment() {
   const body = newComment.value.trim()
-  if (!body) return
+  const authorId = data.value?.myUserId
+  if (!body || !authorId) return
   posting.value = true
   errorMsg.value = ''
   const { error: insertError } = await supabase
     .from('task_comments')
-    .insert({ task_id: props.taskId, author_id: data.value?.myUserId, body })
+    .insert({ task_id: props.taskId, author_id: authorId, body })
   posting.value = false
   if (insertError) {
     errorMsg.value = t('error.generic')
@@ -163,23 +165,8 @@ async function deleteComment(id: string) {
   await refresh()
 }
 
-const RT_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ['year', 31536000],
-  ['month', 2592000],
-  ['week', 604800],
-  ['day', 86400],
-  ['hour', 3600],
-  ['minute', 60]
-]
 
-function timeAgo(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000
-  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' })
-  for (const [unit, secs] of RT_UNITS) {
-    if (diff >= secs) return rtf.format(-Math.floor(diff / secs), unit)
-  }
-  return rtf.format(0, 'second')
-}
+
 
 // --- edit form ---
 const editTitle = ref('')
@@ -260,30 +247,8 @@ async function deleteTask() {
   emit('close')
 }
 
-// --- display helpers ---
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value)
-}
-
-const DUE_CLASSES: Record<DueStatus, string> = {
-  overdue: 'text-danger font-medium',
-  'due-soon': 'text-warning font-medium',
-  upcoming: 'text-text',
-  none: 'text-text-muted'
-}
-
-const PRIORITY_BADGE_CLASSES: Record<string, string> = {
-  low: 'border-priority-low text-priority-low',
-  medium: 'border-priority-medium text-priority-medium',
-  high: 'border-priority-high text-priority-high',
-  critical: 'border-priority-critical text-priority-critical'
-}
-
-const STATUS_DOT: Record<TaskStatus, string> = {
-  todo: 'var(--tf-color-text-muted)',
-  in_progress: 'var(--tf-color-primary)',
-  done: 'var(--tf-color-success)'
-}
+const timeAgo = (iso?: string | null) => _timeAgo(iso, locale.value)
+const formatDate = (iso?: string | null) => _formatDate(iso, locale.value)
 </script>
 
 <template>
@@ -494,18 +459,11 @@ const STATUS_DOT: Record<TaskStatus, string> = {
 
         <ul v-if="data.comments.length" class="mt-4 space-y-4">
           <li v-for="c in data.comments" :key="c.id" class="flex gap-3">
-            <img
-              v-if="c.author?.avatar_url"
-              :src="c.author.avatar_url"
-              alt=""
-              class="h-8 w-8 shrink-0 rounded-full object-cover"
+            <AppAvatar
+              :src="c.author?.avatar_url"
+              :name="c.author?.display_name"
+              size="h-8 w-8"
             />
-            <div
-              v-else
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-alt text-xs font-medium text-text-muted"
-            >
-              {{ (c.author?.display_name ?? '?').charAt(0).toUpperCase() }}
-            </div>
             <div class="min-w-0 flex-1 rounded-xl bg-surface-alt px-3 py-2">
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium text-text">{{ c.author?.display_name ?? '—' }}</span>

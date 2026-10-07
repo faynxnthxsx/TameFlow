@@ -67,7 +67,10 @@ async function signInWithProvider(provider: 'google' | 'github') {
   errorMsg.value = ''
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${window.location.origin}/confirm` }
+    options: {
+      redirectTo: `${window.location.origin}/confirm`,
+      queryParams: provider === 'google' ? { prompt: 'select_account' } : undefined
+    }
   })
   if (error) errorMsg.value = t('error.generic')
 }

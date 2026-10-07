@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SUPPORTED_LOCALES } from '~/composables/useLocalePreference'
-import type { WorkspaceRole } from '~/utils/permissions'
+
 
 const { t, locale } = useI18n()
 const { theme, THEMES, setTheme } = useTheme()
@@ -13,17 +13,15 @@ onMounted(() => {
   if (!profile.value.email) loadProfile()
 })
 
-const { data } = await useAsyncData('settings-data', async () => {
+const { data, pending, refresh } = await useAsyncData('settings-data', async () => {
   const { data: auth } = await supabase.auth.getUser()
   const uid = auth.user?.id ?? null
   const email = auth.user?.email ?? null
   let joined = auth.user?.created_at ?? null
-  let role: WorkspaceRole | null = null
 
   if (!wsStore.loaded) await wsStore.fetchWorkspaces()
 
-  // Unique people across all my teams (a person in N teams must count once —
-  // summing each team's memberCount would double-count me, see /overview).
+  // Unique people across all my teams
   const wsIds = wsStore.workspaces.map((w) => w.id)
   let uniqueMembers = 0
   if (wsIds.length) {
@@ -34,34 +32,28 @@ const { data } = await useAsyncData('settings-data', async () => {
     uniqueMembers = new Set((mrows ?? []).map((r) => r.user_id)).size
   }
 
+  let lineUserId = null
+
   if (uid) {
+    // Get earliest membership date as "joined"
     const { data: mems } = await supabase
       .from('workspace_members')
-      .select('role, created_at')
+      .select('created_at')
       .eq('user_id', uid)
       .order('created_at', { ascending: true })
-    if (mems && mems.length) {
-      joined = mems[0].created_at
-      const rank: Record<string, number> = { owner: 3, admin: 2, member: 1, viewer: 0 }
-      role = mems.reduce<WorkspaceRole | null>(
-        (best, m) => (rank[m.role] > (best ? rank[best] : -1) ? (m.role as WorkspaceRole) : best),
-        null
-      )
-    }
+      .limit(1)
+    if (mems?.[0]) joined = mems[0].created_at
+
+    // Fetch LINE user ID
+    const { data: prof } = await supabase
+      .from('user_profiles')
+      .select('line_user_id')
+      .eq('id', uid)
+      .single()
+    if (prof) lineUserId = prof.line_user_id
   }
 
-  const [tasksRes, projectsRes] = await Promise.all([
-    supabase.from('tasks').select('id, title, created_at').order('created_at', { ascending: false }).limit(6),
-    supabase.from('projects').select('id, name, created_at').order('created_at', { ascending: false }).limit(6)
-  ])
-  const activity = [
-    ...(tasksRes.data ?? []).map((x) => ({ id: `t-${x.id}`, kind: 'task' as const, title: x.title, at: x.created_at, link: `/tasks/${x.id}` })),
-    ...(projectsRes.data ?? []).map((x) => ({ id: `p-${x.id}`, kind: 'project' as const, title: x.name, at: x.created_at, link: `/projects/${x.id}` }))
-  ]
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 4)
-
-  return { email, role, joined, activity, uniqueMembers }
+  return { email, joined, uniqueMembers, lineUserId }
 }, { lazy: true })
 
 const teamTotals = computed(() => ({
@@ -77,22 +69,8 @@ function initials(name: string) {
 function formatDate(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 }
-const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]
-]
-function timeAgo(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000
-  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' })
-  for (const [unit, secs] of UNITS) if (diff >= secs) return rtf.format(-Math.floor(diff / secs), unit)
-  return rtf.format(0, 'second')
-}
 
-const SHORTCUTS = [
-  { to: '/members', icon: 'members', key: 'scMembers' },
-  { to: '/overview', icon: 'building', key: 'scOverview' },
-  { to: '/reports', icon: 'reports', key: 'scReports' },
-  { to: '/invitations', icon: 'mail', key: 'scInvitations' }
-] as const
+
 
 // --- change password ---
 const showPw = ref(false)
@@ -157,6 +135,13 @@ async function signOut() {
   await supabase.auth.signOut()
   await navigateTo('/login')
 }
+
+async function disconnectLine() {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) return
+  await supabase.from('user_profiles').update({ line_user_id: null }).eq('id', auth.user.id)
+  if (data.value) data.value.lineUserId = null
+}
 </script>
 
 <template>
@@ -187,9 +172,6 @@ async function signOut() {
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <p class="truncate text-lg font-bold text-text">{{ profile.name || '—' }}</p>
-                  <span v-if="data?.role" class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                    {{ t(`role.${data.role}`) }}
-                  </span>
                 </div>
                 <p class="truncate text-sm text-text-muted">{{ profile.email || data?.email }}</p>
               </div>
@@ -268,6 +250,38 @@ async function signOut() {
           </section>
         </div>
 
+        <!-- Integrations (LINE) -->
+        <section class="rounded-2xl border border-border bg-surface p-6 shadow-card">
+          <h2 class="text-lg font-semibold text-text">การแจ้งเตือน LINE</h2>
+          <p class="mt-1 text-sm text-text-muted">รับการแจ้งเตือนงานใหม่ๆ และสรุปงานผ่านแชท LINE</p>
+          
+          <div v-if="pending" class="mt-4 flex h-20 items-center justify-center rounded-xl border border-border bg-surface-alt">
+             <span class="text-sm text-text-muted">กำลังตรวจสอบสถานะ...</span>
+          </div>
+          <div v-else-if="data?.lineUserId" class="mt-4 flex items-center justify-between rounded-xl border border-[#00B900]/20 bg-[#00B900]/5 px-4 py-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00B900] text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-[#00B900]">เชื่อมต่อบัญชี LINE เรียบร้อยแล้ว</p>
+                <p class="truncate text-xs text-text-muted">คุณจะได้รับการแจ้งเตือนอัตโนมัติเมื่อมีคนมอบหมายงาน</p>
+              </div>
+            </div>
+            <button type="button" @click="disconnectLine" class="shrink-0 rounded-xl px-3 py-2 text-sm font-medium text-text-muted hover:bg-danger/10 hover:text-danger transition">ยกเลิกเชื่อมต่อ</button>
+          </div>
+          <div v-else class="mt-4 flex flex-col items-start sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border bg-surface-alt p-4">
+            <div>
+              <p class="text-sm font-medium text-text">ยังไม่ได้เชื่อมต่อบัญชี LINE</p>
+              <p class="mt-1 text-xs text-text-muted">ผูกบัญชีเพื่อรับการแจ้งเตือนงานและเช็คงานค้างได้ผ่านแชท</p>
+            </div>
+            <a href="/api/line/login" class="mt-3 sm:mt-0 inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#00B900] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#009900]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              เชื่อมต่อบัญชี LINE
+            </a>
+          </div>
+        </section>
+
         <!-- Account -->
         <section class="rounded-2xl border border-border bg-surface p-6 shadow-card">
           <h2 class="text-lg font-semibold text-text">{{ t('settings.account') }}</h2>
@@ -336,39 +350,6 @@ async function signOut() {
           </div>
         </section>
       </div>
-
-      <!-- Right column -->
-      <aside class="w-full shrink-0 space-y-4 lg:w-80">
-        <!-- Recent activity -->
-        <section class="rounded-2xl border border-border bg-surface p-5 shadow-card">
-          <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-text">{{ t('settings.recentActivity') }}</h2>
-            <NuxtLink to="/activity" class="text-xs font-medium text-primary hover:underline">{{ t('settings.viewAll') }}</NuxtLink>
-          </div>
-          <ul v-if="data && data.activity.length" class="mt-3 space-y-3">
-            <li v-for="a in data.activity" :key="a.id">
-              <NuxtLink :to="a.link" class="flex items-start gap-2.5">
-                <span
-                  class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg"
-                  :class="a.kind === 'task' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'"
-                >
-                  <AppIcon :name="a.kind === 'task' ? 'tasks' : 'projects'" class="h-3.5 w-3.5" />
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm text-text">
-                    <span class="text-text-muted">{{ t(a.kind === 'task' ? 'activity.createdTask' : 'activity.createdProject') }}</span>
-                    {{ a.title }}
-                  </p>
-                  <p class="text-xs text-text-muted">{{ timeAgo(a.at) }}</p>
-                </div>
-              </NuxtLink>
-            </li>
-          </ul>
-          <p v-else class="mt-3 text-sm text-text-muted">{{ t('activity.empty') }}</p>
-        </section>
-
-
-      </aside>
     </div>
 
     <!-- Change-email modal -->

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveCapabilities, ROLE_BADGE_CLASSES } from '~/utils/permissions'
 import type { WorkspaceRole } from '~/utils/permissions'
 
 const { t } = useI18n()
@@ -63,7 +64,8 @@ const roleOptions = computed(() =>
 )
 
 function canManage(role: WorkspaceRole | null) {
-  return role === 'owner' || role === 'admin'
+  if (!role) return false
+  return resolveCapabilities(role).manageMembers
 }
 
 async function changeRole(m: MemberRow, role: string) {
@@ -96,17 +98,6 @@ async function confirmRemove() {
     memberToRemove.value = null
     await refresh()
   }
-}
-
-function initials(name: string | null | undefined) {
-  return (name ?? '?').charAt(0).toUpperCase()
-}
-
-const ROLE_BADGE_CLASSES: Record<string, string> = {
-  owner: 'bg-primary/10 text-primary',
-  admin: 'bg-info/10 text-info',
-  member: 'bg-surface-alt text-text',
-  viewer: 'bg-surface-alt text-text-muted'
 }
 </script>
 
@@ -166,18 +157,12 @@ const ROLE_BADGE_CLASSES: Record<string, string> = {
             class="flex items-center justify-between gap-3 px-5 py-3"
           >
             <div class="flex min-w-0 items-center gap-3">
-              <img
-                v-if="m.profile?.avatar_url"
-                :src="m.profile.avatar_url"
-                alt=""
-                class="h-9 w-9 rounded-full object-cover ring-2 ring-surface"
+              <AppAvatar
+                :src="m.profile?.avatar_url"
+                :name="m.profile?.display_name"
+                size="h-9 w-9"
+                class="ring-2 ring-surface"
               />
-              <span
-                v-else
-                class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary ring-2 ring-surface"
-              >
-                {{ initials(m.profile?.display_name) }}
-              </span>
               <p class="truncate font-medium text-text">
                 {{ m.profile?.display_name ?? '—' }}
                 <span v-if="m.user_id === data.uid" class="text-sm font-normal text-text-muted">
@@ -220,40 +205,37 @@ const ROLE_BADGE_CLASSES: Record<string, string> = {
     </div>
 
     <!-- Remove member confirmation -->
-    <Teleport to="body">
-      <div v-if="memberToRemove" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="memberToRemove = null" />
-        <div class="relative w-full max-w-sm rounded-2xl bg-surface p-6 text-center shadow-modal">
-          <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-danger/10 text-danger">
-            <AppIcon name="trash" class="h-6 w-6" />
-          </span>
-          <h2 class="mt-4 text-lg font-bold text-text">{{ t('members.removeTitle') }}</h2>
-          <p class="mt-2 text-sm text-text-muted">
-            {{ t('members.removeConfirm', {
-              name: memberToRemove.m.profile?.display_name ?? '—',
-              workspace: memberToRemove.workspaceName
-            }) }}
-          </p>
-          <div class="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              class="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
-              @click="memberToRemove = null"
-            >
-              {{ t('common.cancel') }}
-            </button>
-            <button
-              type="button"
-              :disabled="removing"
-              class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:opacity-90 disabled:opacity-60"
-              @click="confirmRemove"
-            >
-              <AppIcon name="trash" class="h-4 w-4" />
-              {{ removing ? t('common.loading') : t('members.remove') }}
-            </button>
-          </div>
+    <AppModal :show="!!memberToRemove" max-width="max-w-sm" @close="memberToRemove = null">
+      <div v-if="memberToRemove" class="text-center">
+        <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-danger/10 text-danger">
+          <AppIcon name="trash" class="h-6 w-6" />
+        </span>
+        <h2 class="mt-4 text-lg font-bold text-text">{{ t('members.removeTitle') }}</h2>
+        <p class="mt-2 text-sm text-text-muted">
+          {{ t('members.removeConfirm', {
+            name: memberToRemove.m.profile?.display_name ?? '—',
+            workspace: memberToRemove.workspaceName
+          }) }}
+        </p>
+        <div class="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            class="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
+            @click="memberToRemove = null"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            :disabled="removing"
+            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            @click="confirmRemove"
+          >
+            <AppIcon name="trash" class="h-4 w-4" />
+            {{ removing ? t('common.loading') : t('members.remove') }}
+          </button>
         </div>
       </div>
-    </Teleport>
+    </AppModal>
   </div>
 </template>

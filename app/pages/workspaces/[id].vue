@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { resolveCapabilities, ROLE_BADGE_CLASSES } from '~/utils/permissions'
 import type { WorkspaceRole } from '~/utils/permissions'
+import { formatDate as _formatDate, calcPct } from '~/utils/dates'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -211,24 +213,7 @@ function shareTargets(token: string) {
   ]
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value)
-}
-
-// Subtle role chips, matching the workspace list cards.
-const ROLE_BADGE_CLASSES: Record<string, string> = {
-  owner: 'bg-primary/10 text-primary',
-  admin: 'bg-info/10 text-info',
-  member: 'bg-surface-alt text-text',
-  viewer: 'bg-surface-alt text-text-muted'
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/)
-  const first = parts[0]?.[0] ?? ''
-  const second = parts.length > 1 ? parts[1][0] : (parts[0]?.[1] ?? '')
-  return (first + second).toUpperCase() || 'WS'
-}
+const formatDate = (iso?: string | null) => _formatDate(iso, locale.value)
 </script>
 
 <template>
@@ -377,18 +362,12 @@ function initials(name: string) {
           class="flex items-center justify-between p-4 transition hover:bg-surface-alt/50"
         >
           <div class="flex min-w-0 items-center gap-3">
-            <img
-              v-if="member.profile?.avatar_url"
-              :src="member.profile.avatar_url"
-              alt=""
-              class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-surface"
+            <AppAvatar
+              :src="member.profile?.avatar_url"
+              :name="member.profile?.display_name"
+              size="h-10 w-10"
+              class="ring-2 ring-surface"
             />
-            <span
-              v-else
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary ring-2 ring-surface"
-            >
-              {{ (member.profile?.display_name ?? '?').charAt(0).toUpperCase() }}
-            </span>
             <div class="min-w-0">
               <p class="truncate font-medium text-text">
                 {{ member.profile?.display_name ?? '—' }}
@@ -506,173 +485,161 @@ function initials(name: string) {
       </template>
     </template>
 
-    <!-- Create project modal -->
-    <Teleport to="body">
-      <div v-if="showProjectForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="cancelProjectForm" />
-        <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-modal">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-fg">
-                <AppIcon name="projects" class="h-5 w-5" />
-              </span>
-              <div>
-                <h2 class="text-lg font-bold text-text">{{ t('project.create') }}</h2>
-                <p class="text-sm text-text-muted">{{ t('project.createSubtitle') }}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
-              @click="cancelProjectForm"
-            >
-              <AppIcon name="x" class="h-5 w-5" />
-            </button>
+    <AppModal :show="showProjectForm" max-width="max-w-md" @close="cancelProjectForm">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-fg">
+            <AppIcon name="projects" class="h-5 w-5" />
+          </span>
+          <div>
+            <h2 class="text-lg font-bold text-text">{{ t('project.create') }}</h2>
+            <p class="text-sm text-text-muted">{{ t('project.createSubtitle') }}</p>
           </div>
-
-          <form class="mt-5 flex flex-col gap-4" @submit.prevent="createProject">
-            <div>
-              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('project.namePlaceholder') }}</label>
-              <input
-                ref="projectNameInput"
-                v-model="projectName"
-                type="text"
-                maxlength="80"
-                :placeholder="t('project.namePlaceholder')"
-                class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                @keyup.esc="cancelProjectForm"
-              />
-            </div>
-            <div>
-              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('project.descriptionPlaceholder') }}</label>
-              <textarea
-                v-model="projectDescription"
-                rows="3"
-                maxlength="500"
-                :placeholder="t('project.descriptionPlaceholder')"
-                class="w-full resize-y rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <p v-if="projectError" class="text-sm text-danger">{{ projectError }}</p>
-
-            <div class="flex justify-end gap-3">
-              <button
-                type="button"
-                class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
-                @click="cancelProjectForm"
-              >
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                type="submit"
-                :disabled="creatingProject || !projectName.trim()"
-                class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
-              >
-                <AppIcon name="plus" class="h-4 w-4" />
-                {{ creatingProject ? t('common.loading') : t('project.create') }}
-              </button>
-            </div>
-          </form>
         </div>
+        <button
+          type="button"
+          class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
+          @click="cancelProjectForm"
+        >
+          <AppIcon name="x" class="h-5 w-5" />
+        </button>
       </div>
-    </Teleport>
 
-    <!-- Invite-link modal -->
-    <Teleport to="body">
-      <div v-if="showInviteForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="cancelInviteForm" />
-        <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-modal">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-info text-primary-fg">
-                <AppIcon name="link" class="h-5 w-5" />
-              </span>
-              <div>
-                <h2 class="text-lg font-bold text-text">{{ t('invite.linkModalTitle') }}</h2>
-                <p class="text-sm text-text-muted">{{ t('invite.linkModalSubtitle') }}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
-              @click="cancelInviteForm"
-            >
-              <AppIcon name="x" class="h-5 w-5" />
-            </button>
-          </div>
+      <form class="mt-5 flex flex-col gap-4" @submit.prevent="createProject">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium text-text">{{ t('project.namePlaceholder') }}</label>
+          <input
+            ref="projectNameInput"
+            v-model="projectName"
+            type="text"
+            maxlength="80"
+            :placeholder="t('project.namePlaceholder')"
+            class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            @keyup.esc="cancelProjectForm"
+          />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-medium text-text">{{ t('project.descriptionPlaceholder') }}</label>
+          <textarea
+            v-model="projectDescription"
+            rows="3"
+            maxlength="500"
+            :placeholder="t('project.descriptionPlaceholder')"
+            class="w-full resize-y rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <p v-if="projectError" class="text-sm text-danger">{{ projectError }}</p>
 
-          <!-- Create a new link -->
-          <form class="mt-5 flex items-end gap-3" @submit.prevent="createLink">
-            <div class="flex-1">
-              <label class="mb-1.5 block text-sm font-medium text-text">{{ t('invite.roleLabel') }}</label>
-              <select
-                v-model="linkRole"
-                class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option v-for="r in INVITABLE_ROLES" :key="r" :value="r">
-                  {{ t(`role.${r}`) }}
-                </option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              :disabled="creatingLink"
-              class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
-            >
-              <AppIcon name="plus" class="h-4 w-4" />
-              {{ creatingLink ? t('common.loading') : t('invite.createLink') }}
-            </button>
-          </form>
-          <p v-if="linkError" class="mt-2 text-sm text-danger">{{ linkError }}</p>
-
-          <!-- Existing links: copy / revoke -->
-          <div v-if="data && data.links.length" class="mt-5 border-t border-border pt-4">
-            <p class="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-              {{ t('invite.activeLinks') }}
-            </p>
-            <ul class="flex max-h-64 flex-col gap-2 overflow-y-auto">
-              <li
-                v-for="link in data.links"
-                :key="link.id"
-                class="flex items-center gap-2 rounded-xl border border-border bg-surface-alt/40 p-2.5"
-              >
-                <span
-                  class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-                  :class="ROLE_BADGE_CLASSES[link.role]"
-                >
-                  {{ t(`role.${link.role}`) }}
-                </span>
-                <span class="min-w-0 flex-1 truncate text-xs text-text-muted">{{ linkUrl(link.token) }}</span>
-                <button
-                  type="button"
-                  class="shrink-0 rounded-lg p-1.5 transition hover:bg-surface"
-                  :class="copiedToken === link.token ? 'text-success' : 'text-text-muted hover:text-text'"
-                  :title="t('invite.copyLink')"
-                  @click="copyLink(link.token)"
-                >
-                  <AppIcon :name="copiedToken === link.token ? 'check' : 'copy'" class="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-danger/10 hover:text-danger"
-                  :title="t('invite.revoke')"
-                  @click="deleteLink(link.id)"
-                >
-                  <AppIcon name="trash" class="h-4 w-4" />
-                </button>
-              </li>
-            </ul>
-          </div>
-
+        <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="mt-6 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover"
-            @click="cancelInviteForm"
+            class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
+            @click="cancelProjectForm"
           >
-            {{ t('invite.done') }}
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="submit"
+            :disabled="creatingProject || !projectName.trim()"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+          >
+            <AppIcon name="plus" class="h-4 w-4" />
+            {{ creatingProject ? t('common.loading') : t('project.create') }}
           </button>
         </div>
+      </form>
+    </AppModal>
+
+    <AppModal :show="showInviteForm" max-width="max-w-md" @close="cancelInviteForm">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-info text-primary-fg">
+            <AppIcon name="link" class="h-5 w-5" />
+          </span>
+          <div>
+            <h2 class="text-lg font-bold text-text">{{ t('invite.linkModalTitle') }}</h2>
+            <p class="text-sm text-text-muted">{{ t('invite.linkModalSubtitle') }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg p-1 text-text-muted transition hover:bg-surface-alt hover:text-text"
+          @click="cancelInviteForm"
+        >
+          <AppIcon name="x" class="h-5 w-5" />
+        </button>
       </div>
-    </Teleport>
+
+      <!-- Create a new link -->
+      <form class="mt-5 flex items-end gap-3" @submit.prevent="createLink">
+        <div class="flex-1">
+          <label class="mb-1.5 block text-sm font-medium text-text">{{ t('invite.roleLabel') }}</label>
+          <select
+            v-model="linkRole"
+            class="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option v-for="r in INVITABLE_ROLES" :key="r" :value="r">
+              {{ t(`role.${r}`) }}
+            </option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          :disabled="creatingLink"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover disabled:opacity-60"
+        >
+          <AppIcon name="plus" class="h-4 w-4" />
+          {{ creatingLink ? t('common.loading') : t('invite.createLink') }}
+        </button>
+      </form>
+      <p v-if="linkError" class="mt-2 text-sm text-danger">{{ linkError }}</p>
+
+      <!-- Existing links: copy / revoke -->
+      <div v-if="data && data.links.length" class="mt-5 border-t border-border pt-4">
+        <p class="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
+          {{ t('invite.activeLinks') }}
+        </p>
+        <ul class="flex max-h-64 flex-col gap-2 overflow-y-auto">
+          <li
+            v-for="link in data.links"
+            :key="link.id"
+            class="flex items-center gap-2 rounded-xl border border-border bg-surface-alt/40 p-2.5"
+          >
+            <span
+              class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+              :class="ROLE_BADGE_CLASSES[link.role]"
+            >
+              {{ t(`role.${link.role}`) }}
+            </span>
+            <span class="min-w-0 flex-1 truncate text-xs text-text-muted">{{ linkUrl(link.token) }}</span>
+            <button
+              type="button"
+              class="shrink-0 rounded-lg p-1.5 transition hover:bg-surface"
+              :class="copiedToken === link.token ? 'text-success' : 'text-text-muted hover:text-text'"
+              :title="t('invite.copyLink')"
+              @click="copyLink(link.token)"
+            >
+              <AppIcon :name="copiedToken === link.token ? 'check' : 'copy'" class="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              class="shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-danger/10 hover:text-danger"
+              :title="t('invite.revoke')"
+              @click="deleteLink(link.id)"
+            >
+              <AppIcon name="trash" class="h-4 w-4" />
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <button
+        type="button"
+        class="mt-6 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:bg-primary-hover"
+        @click="cancelInviteForm"
+      >
+        {{ t('invite.done') }}
+      </button>
+    </AppModal>
   </div>
 </template>

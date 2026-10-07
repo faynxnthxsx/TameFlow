@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { timeAgo as _timeAgo } from '~/utils/dates'
 const { t, locale } = useI18n()
 const supabase = useSupabaseClient()
 
@@ -201,25 +202,7 @@ const groups = computed(() => {
   return out
 })
 
-const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ['year', 31536000],
-  ['month', 2592000],
-  ['week', 604800],
-  ['day', 86400],
-  ['hour', 3600],
-  ['minute', 60]
-]
-function timeAgo(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000
-  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' })
-  for (const [unit, secs] of UNITS) {
-    if (diff >= secs) return rtf.format(-Math.floor(diff / secs), unit)
-  }
-  return rtf.format(0, 'second')
-}
-function initials(name: string | null) {
-  return (name ?? '?').trim().slice(0, 2).toUpperCase() || '??'
-}
+const timeAgo = (iso?: string | null) => _timeAgo(iso, locale.value)
 function isDone(i: FeedItem) {
   return i.kind === 'project' || i.complete
 }
@@ -332,18 +315,11 @@ watch(taskModal.refreshTrigger, () => refresh())
 
                   <!-- actor + time -->
                   <div class="hidden shrink-0 items-center gap-2 sm:flex">
-                    <img
-                      v-if="item.actorAvatar"
+                    <AppAvatar
                       :src="item.actorAvatar"
-                      :alt="item.actorName ?? ''"
-                      class="h-7 w-7 rounded-full object-cover"
+                      :name="item.actorName"
+                      size="h-7 w-7"
                     />
-                    <span
-                      v-else
-                      class="grid h-7 w-7 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary"
-                    >
-                      {{ initials(item.actorName) }}
-                    </span>
                     <div class="text-right">
                       <p class="max-w-[9rem] truncate text-xs font-medium text-text">{{ item.actorName ?? '—' }}</p>
                       <p class="text-[11px] text-text-muted">{{ timeAgo(item.at) }}</p>

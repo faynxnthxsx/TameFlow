@@ -8,7 +8,7 @@ const open = useState('tf-sidebar-open', () => false)
 watch(() => route.fullPath, () => (open.value = false))
 
 // กำหนดปุ่มเเละไอคอนเมนูนำทางใน sidebar เเละ Const Assertion ล็อกทั้งก้อนให้เป็นแบบ(Read-Only)
-const navItems = [
+const navItems: Array<{ key: string; icon: string; to?: string }> = [
   { key: 'nav.dashboard', icon: 'dashboard', to: '/' },
   { key: 'nav.overview', icon: 'building', to: '/overview' },
   { key: 'nav.workspaces', icon: 'workspace', to: '/workspaces' },
@@ -20,7 +20,7 @@ const navItems = [
   { key: 'nav.members', icon: 'members', to: '/members' },
   { key: 'nav.reports', icon: 'reports', to: '/reports' },
   { key: 'nav.settings', icon: 'settings', to: '/settings' }
-] as const 
+]
 
 //เพื่อจัดการ State สีไฮไลต์  เเละตรวจสอบเส้นทางด้วย if-else ย่อว่าตรงกับที่กำหนดไว้ไหม
 function isActive(to: string) {

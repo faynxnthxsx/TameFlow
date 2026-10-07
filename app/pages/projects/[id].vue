@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDate as _formatDate } from '~/utils/dates'
 import type { DueStatus } from '~/utils/dates'
 import type { WorkspaceRole } from '~/utils/permissions'
 import type { TaskPriority, TaskStatus, TaskType } from '~/utils/tasks'
@@ -171,7 +172,7 @@ async function createTask() {
   const { error: insertError } = await supabase.from('tasks').insert({
     project_id: projectId,
     title,
-    description: newDescription.value.trim() || null,
+    description: newDescription.value.trim() || '',
     priority: newPriority.value,
     type: newType.value,
     due_date: newDueDate.value || null,
@@ -192,7 +193,8 @@ async function createTask() {
       body: {
         assigneeId: newAssignee.value,
         taskTitle: title,
-        projectName: data.value?.project.name
+        projectName: data.value?.project.name,
+        projectId: projectId
       }
     }).catch(e => console.error('Failed to notify assignee:', e))
   }
@@ -249,9 +251,7 @@ const taskModal = useTaskModal()
 watch(taskModal.refreshTrigger, () => refresh())
 
 // --- display helpers ---
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(locale.value)
-}
+const formatDate = (iso?: string | null) => _formatDate(iso, locale.value)
 
 const DUE_CLASSES: Record<DueStatus, string> = {
   overdue: 'text-danger font-medium',
@@ -609,10 +609,7 @@ const STATUS_DOT: Record<TaskStatus, string> = {
                     {{ formatDate(task.due_date) }}
                   </span>
                   <div v-if="task.assignee" class="flex items-center gap-1.5 text-text-muted">
-                    <img v-if="task.assignee.avatar_url" :src="task.assignee.avatar_url" class="h-5 w-5 rounded-full object-cover" />
-                    <div v-else class="grid h-5 w-5 place-items-center rounded-full bg-surface-alt text-[10px] font-bold text-text">
-                      {{ task.assignee.display_name?.charAt(0).toUpperCase() ?? '?' }}
-                    </div>
+                    <AppAvatar :src="task.assignee.avatar_url" :name="task.assignee.display_name" size="h-5 w-5" />
                     <span class="truncate max-w-[80px]">{{ task.assignee.display_name }}</span>
                   </div>
                 </div>
@@ -645,37 +642,34 @@ const STATUS_DOT: Record<TaskStatus, string> = {
 
 
     <!-- Delete task confirmation -->
-    <Teleport to="body">
-      <div v-if="taskToDelete" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-text/50 backdrop-blur-sm" @click="taskToDelete = null" />
-        <div class="relative w-full max-w-sm rounded-2xl bg-surface p-6 text-center shadow-modal">
-          <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-danger/10 text-danger">
-            <AppIcon name="trash" class="h-6 w-6" />
-          </span>
-          <h2 class="mt-4 text-lg font-bold text-text">{{ t('task.deleteTitle') }}</h2>
-          <p class="mt-2 text-sm text-text-muted">
-            {{ t('task.deleteConfirm', { title: taskToDelete.title }) }}
-          </p>
-          <div class="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              class="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
-              @click="taskToDelete = null"
-            >
-              {{ t('common.cancel') }}
-            </button>
-            <button
-              type="button"
-              :disabled="deleting"
-              class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:opacity-90 disabled:opacity-60"
-              @click="confirmDelete"
-            >
-              <AppIcon name="trash" class="h-4 w-4" />
-              {{ deleting ? t('common.loading') : t('common.delete') }}
-            </button>
-          </div>
+    <AppModal :show="!!taskToDelete" max-width="max-w-sm" @close="taskToDelete = null">
+      <div v-if="taskToDelete" class="text-center">
+        <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-danger/10 text-danger">
+          <AppIcon name="trash" class="h-6 w-6" />
+        </span>
+        <h2 class="mt-4 text-lg font-bold text-text">{{ t('task.deleteTitle') }}</h2>
+        <p class="mt-2 text-sm text-text-muted">
+          {{ t('task.deleteConfirm', { title: taskToDelete.title }) }}
+        </p>
+        <div class="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            class="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-muted transition hover:text-text"
+            @click="taskToDelete = null"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            :disabled="deleting"
+            class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-primary-fg shadow-sm transition hover:opacity-90 disabled:opacity-60"
+            @click="confirmDelete"
+          >
+            <AppIcon name="trash" class="h-4 w-4" />
+            {{ deleting ? t('common.loading') : t('common.delete') }}
+          </button>
         </div>
       </div>
-    </Teleport>
+    </AppModal>
   </div>
 </template>
